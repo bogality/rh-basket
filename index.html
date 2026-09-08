@@ -1,0 +1,2905 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Robinhood Chain Basket Builder</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px 80px;
+      line-height: 1.45;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: #555;
+      margin-top: 0;
+    }
+
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 18px;
+      margin: 18px 0;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    input,
+    select {
+      padding: 9px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    input[type="number"] {
+      width: 130px;
+    }
+
+    button {
+      padding: 11px 16px;
+      margin: 6px 6px 6px 0;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .basket-row {
+      display: flex;
+      gap: 12px;
+      align-items: end;
+      margin: 12px 0;
+      flex-wrap: wrap;
+    }
+
+    .basket-row select {
+      min-width: 170px;
+    }
+
+    .basket-row .weight {
+      width: 100px;
+    }
+
+    .remove {
+      padding: 9px 12px;
+    }
+
+    .status-good {
+      color: green;
+      font-weight: bold;
+    }
+
+    .status-bad {
+      color: #a00;
+      font-weight: bold;
+    }
+
+    pre {
+      background: #f4f4f4;
+      border-radius: 8px;
+      padding: 16px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      min-height: 80px;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .big-number {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+.big-number {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+
+/* ===== BASKET POLISH ===== */
+
+.preset {
+  padding: 10px 16px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.preset:hover {
+  background: #f5f5f5;
+}
+
+.preset.active {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+.basket-row select,
+.basket-row input {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.basket-row label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.basket-row .remove {
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.basket-row .remove:hover {
+  background: #f7f7f7;
+}
+
+#addStock {
+  padding: 10px 16px;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* =========================================================
+   APP VISUAL THEME
+   ========================================================= */
+
+:root {
+  --bg: #0b0e11;
+  --surface: #12161b;
+  --surface-2: #181d23;
+  --border: #272d35;
+
+  --text: #f4f6f8;
+  --muted: #8f9aa6;
+
+  --accent: #37e88d;
+  --accent-hover: #54f5a2;
+
+  --danger: #ff6464;
+
+  --radius: 14px;
+}
+
+
+/* PAGE */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(
+      circle at top,
+      #151b20 0,
+      #0b0e11 420px
+    );
+  color: var(--text);
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  line-height: 1.5;
+}
+
+
+/* MAIN CONTENT */
+
+.container,
+main {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+
+/* HEADINGS */
+
+h1 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 34px;
+  letter-spacing: -0.8px;
+}
+
+h2,
+h3 {
+  color: var(--text);
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+
+
+/* CARDS */
+
+.card {
+  background:
+    linear-gradient(
+      180deg,
+      var(--surface-2),
+      var(--surface)
+    );
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  padding: 22px;
+  margin-bottom: 18px;
+
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+
+/* SECONDARY TEXT */
+
+.small {
+  color: var(--muted);
+}
+
+
+/* LABELS */
+
+label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+
+/* INPUTS */
+
+input,
+select {
+  background: #0e1216;
+  color: var(--text);
+
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  padding: 10px 12px;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+
+  box-shadow:
+    0 0 0 3px rgba(55, 232, 141, 0.12);
+}
+
+
+/* BUTTONS */
+
+button {
+  background: var(--surface-2);
+  color: var(--text);
+
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  padding: 10px 16px;
+
+  font-weight: 650;
+  cursor: pointer;
+
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+button:hover:not(:disabled) {
+  background: #20262d;
+  border-color: #3a424c;
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+/* PRIMARY ACTIONS */
+
+#simulate,
+#send,
+#connect {
+  background: var(--accent);
+  color: #07110b;
+  border-color: var(--accent);
+}
+
+#simulate:hover:not(:disabled),
+#send:hover:not(:disabled),
+#connect:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+
+/* PRESET BUTTONS */
+
+.preset {
+  background: #101419;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.preset:hover {
+  background: #1b2127;
+}
+
+.preset.active {
+  background: var(--accent);
+  color: #07110b;
+  border-color: var(--accent);
+}
+
+
+/* BASKET ROWS */
+
+.basket-row > div {
+  background: #0f1317 !important;
+  border-color: var(--border) !important;
+}
+
+
+/* REMOVE BUTTON */
+
+.basket-row .remove {
+  background: transparent !important;
+  color: #ff8585;
+  border-color: rgba(255, 100, 100, 0.3) !important;
+}
+
+.basket-row .remove:hover {
+  background: rgba(255, 100, 100, 0.08) !important;
+}
+
+
+/* ADD STOCK */
+
+#addStock {
+  background: transparent;
+  color: var(--accent);
+  border: 1px dashed #3a5547;
+}
+
+#addStock:hover:not(:disabled) {
+  background: rgba(55, 232, 141, 0.07);
+  border-color: var(--accent);
+}
+
+
+/* DEBUG / SIMULATION OUTPUT */
+
+pre {
+  background: #080b0e;
+  color: #aeb8c2;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  padding: 16px;
+
+  overflow-x: auto;
+
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+
+/* QUOTE PREVIEW */
+
+#quoteSummary > div {
+  background: #0f1317 !important;
+  border-color: var(--border) !important;
+}
+
+#quoteTimer {
+  margin: 8px 0 14px;
+  color: var(--muted);
+}
+
+</style>
+  
+</head>
+
+<body>
+
+<h1>Robinhood Chain Basket Builder</h1>
+<p class="subtitle">
+  Build a portfolio of Robinhood Stock Tokens and execute it in one transaction.
+</p>
+
+<div class="card">
+  <h3>1. Wallet</h3>
+
+  <button id="connect">Connect MetaMask</button>
+
+  <div id="walletInfo">
+  Not connected.
+</div>
+
+<div id="permissionStatus" style="margin-top:14px;">
+  <div>Trading permissions not checked yet.</div>
+</div>
+
+<div style="margin-top:12px;">
+  <button id="approveUSDG" disabled>
+    Enable USDG
+  </button>
+
+  <button id="renewPermit" disabled>
+    Enable Router
+  </button>
+</div>
+</div>
+
+
+<div class="card">
+  <h3>2. Investment Amount</h3>
+
+  <label for="totalAmount">
+    Total USDG
+  </label>
+
+  <input
+    id="totalAmount"
+    type="number"
+    min="0.01"
+    step="0.01"
+    value="3"
+  />
+
+  <p class="small">
+    This is the maximum USDG the basket will spend.
+  </p>
+</div>
+
+
+<div class="card">
+  <h3>3. Basket</h3>
+
+<div style="margin-bottom:16px;">
+  <label>Presets</label>
+
+  <button type="button" class="preset" data-preset="ai">
+    AI Leaders
+  </button>
+
+  <button type="button" class="preset" data-preset="broad">
+    Broad Market
+  </button>
+
+  <button type="button" class="preset" data-preset="beta">
+    High Beta
+  </button>
+</div>
+
+  <div id="basketRows"></div>
+
+  <button id="addStock" disabled>
+    + Add Stock
+  </button>
+
+  <p>
+    Total allocation:
+    <span id="weightTotal" class="big-number">0%</span>
+  </p>
+</div>
+
+
+<div class="card">
+  <h3>4. Slippage</h3>
+
+  <label for="slippage">
+    Maximum slippage per stock
+  </label>
+
+  <select id="slippage">
+    <option value="25">0.25%</option>
+    <option value="50" selected>0.50%</option>
+    <option value="100">1.00%</option>
+  </select>
+</div>
+
+
+<div class="card">
+  <h3>5. Quote + Simulation</h3>
+
+  <button id="simulate" disabled>
+    Build + Simulate Basket
+  </button>
+
+  <button id="send" disabled>
+    Send Basket
+  </button>
+
+<div id="quoteSummary" style="margin:16px 0;"></div>
+
+<div id="quoteTimer" class="small"></div>
+
+  <pre id="output">Connect MetaMask to begin.</pre>
+</div>
+
+
+<script type="module">
+
+import {
+  BrowserProvider,
+  Contract,
+  Interface,
+  AbiCoder,
+  parseUnits,
+  formatUnits,
+  hexlify
+} from "ethers";
+
+
+/* =========================================================
+   ROBINHOOD CHAIN
+   ========================================================= */
+
+const CHAIN_ID = 4663n;
+
+const REGISTRY =
+  "0x159a113e012593d9b3cc63ad45e30f0467e13ef3";
+
+const QUOTER =
+  "0x8dc178efb8111bb0973dd9d722ebeff267c98f94";
+
+const UNIVERSAL_ROUTER =
+  "0x8876789976decbfcbbbe364623c63652db8c0904";
+
+const PERMIT2 =
+  "0x000000000022D473030F116dDEE9F6B43aC78BA3";
+
+const USDG =
+  "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
+
+const APP_FEE_RECIPIENT =
+  "0xbc9ca263a8a6872ddF808478ae9e0be14832e5b7";
+
+const APP_FEE_BPS = 10n;
+
+
+/* =========================================================
+   ABIs
+   ========================================================= */
+
+const REGISTRY_ABI = [
+  `function activePools()
+    view
+    returns (
+      tuple(
+        tuple(
+          address currency0,
+          address currency1,
+          uint24 fee,
+          int24 tickSpacing,
+          address hooks
+        ) key,
+        bytes32 id,
+        bool active
+      )[]
+    )`
+];
+
+const ERC20_ABI = [
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function balanceOf(address owner) view returns (uint256)",
+  "function allowance(address owner,address spender) view returns (uint256)"
+];
+
+const PERMIT2_ABI = [
+  `function allowance(
+    address owner,
+    address token,
+    address spender
+  )
+  view
+  returns (
+    uint160 amount,
+    uint48 expiration,
+    uint48 nonce
+  )`
+];
+
+const QUOTER_ABI = [
+  `function quoteExactInputSingle(
+    tuple(
+      tuple(
+        address currency0,
+        address currency1,
+        uint24 fee,
+        int24 tickSpacing,
+        address hooks
+      ) poolKey,
+      bool zeroForOne,
+      uint128 exactAmount,
+      bytes hookData
+    ) params
+  )
+  returns (
+    uint256 amountOut,
+    uint256 gasEstimate
+  )`
+];
+
+const HOOK_ABI = [
+  "function currentFee(bytes32 poolId,bool zeroForOne) view returns (uint24)"
+];
+
+const ROUTER_ABI = [
+  "function execute(bytes commands,bytes[] inputs,uint256 deadline) payable"
+];
+
+
+/* =========================================================
+   UNISWAP V4 ACTIONS
+   ========================================================= */
+
+const V4_SWAP = 0x10;
+const PERMIT2_TRANSFER_FROM = 0x02;
+
+const SWAP_EXACT_IN_SINGLE = 0x06;
+const SETTLE_ALL = 0x0c;
+const TAKE_ALL = 0x0f;
+
+const BPS = 10000n;
+
+const abi = AbiCoder.defaultAbiCoder();
+
+
+/* =========================================================
+   STATE
+   ========================================================= */
+
+let provider;
+let signer;
+let walletAddress;
+
+let discoveredPools = [];
+
+let preparedTransaction = null;
+
+let quoteExpiresAt = 0;
+let quoteTimerInterval = null;
+
+
+/* =========================================================
+   HTML ELEMENTS
+   ========================================================= */
+
+const connectButton =
+  document.getElementById("connect");
+
+const simulateButton =
+  document.getElementById("simulate");
+
+const sendButton =
+  document.getElementById("send");
+
+const addStockButton =
+  document.getElementById("addStock");
+
+const approveUSDGButton =
+  document.getElementById("approveUSDG");
+
+const renewPermitButton =
+  document.getElementById("renewPermit");
+
+const walletInfo =
+  document.getElementById("walletInfo");
+
+const permissionStatus =
+  document.getElementById("permissionStatus");
+
+const basketRows =
+  document.getElementById("basketRows");
+
+const weightTotal =
+  document.getElementById("weightTotal");
+
+const totalAmountInput =
+  document.getElementById("totalAmount");
+
+const slippageSelect =
+  document.getElementById("slippage");
+
+const output =
+  document.getElementById("output");
+
+const quoteSummary =
+  document.getElementById("quoteSummary");
+
+const quoteTimer =
+  document.getElementById("quoteTimer");
+
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function log(text = "") {
+  output.textContent += text + "\n";
+}
+
+
+function clearOutput() {
+  output.textContent = "";
+}
+
+function friendlyError(error) {
+
+  const message =
+    error?.shortMessage
+    ||
+    error?.message
+    ||
+    String(error);
+
+  if (
+    message.includes("user rejected")
+    ||
+    message.includes("ACTION_REJECTED")
+  ) {
+    return "Transaction cancelled in MetaMask.";
+  }
+
+  if (
+    message.toLowerCase().includes("insufficient funds")
+  ) {
+    return "Not enough balance to complete this transaction.";
+  }
+
+  if (
+    message.toLowerCase().includes("allowance")
+  ) {
+    return "Wallet permission is too low or has expired.";
+  }
+
+  if (
+    message.toLowerCase().includes("expired")
+  ) {
+    return "The quote or wallet permission has expired. Please try again.";
+  }
+
+  return message;
+}
+
+function clearQuoteSummary() {
+
+  quoteSummary.innerHTML = "";
+  quoteTimer.textContent = "";
+
+  if (quoteTimerInterval) {
+    clearInterval(quoteTimerInterval);
+    quoteTimerInterval = null;
+  }
+
+  quoteExpiresAt = 0;
+}
+
+
+function startQuoteTimer(seconds = 45) {
+
+  if (quoteTimerInterval) {
+    clearInterval(quoteTimerInterval);
+  }
+
+  quoteExpiresAt =
+    Date.now() + seconds * 1000;
+
+  const update = () => {
+
+    const remaining =
+      Math.max(
+        0,
+        Math.ceil(
+          (quoteExpiresAt - Date.now()) / 1000
+        )
+      );
+
+    if (remaining > 0) {
+
+      quoteTimer.textContent =
+        `Quote valid for ${remaining}s`;
+
+sendButton.textContent =
+  "Send Basket";
+
+simulateButton.textContent =
+  "Build + Simulate Basket";
+
+    } else {
+
+quoteTimer.textContent =
+  "Quote expired — rebuild before sending.";
+
+sendButton.disabled = true;
+
+sendButton.textContent =
+  "Quote Expired";
+
+simulateButton.textContent =
+  "Rebuild Quote";
+
+preparedTransaction = null;
+
+      clearInterval(quoteTimerInterval);
+      quoteTimerInterval = null;
+    }
+  };
+
+  update();
+
+  quoteTimerInterval =
+    setInterval(update, 1000);
+}
+
+
+async function tokenInfo(address) {
+
+  const token = new Contract(
+    address,
+    ERC20_ABI,
+    provider
+  );
+
+  const [symbol, decimals] =
+    await Promise.all([
+      token.symbol(),
+      token.decimals()
+    ]);
+
+  return {
+    address,
+    symbol,
+    decimals: Number(decimals)
+  };
+}
+
+
+/* =========================================================
+   DISCOVER FABLES USDG POOLS
+   ========================================================= */
+
+async function discoverPools() {
+
+  const registry =
+    new Contract(
+      REGISTRY,
+      REGISTRY_ABI,
+      provider
+    );
+
+  const pools =
+    await registry.activePools();
+
+  const found = [];
+
+  for (const pool of pools) {
+
+    const key = pool.key;
+
+    const c0 =
+      key.currency0.toLowerCase();
+
+    const c1 =
+      key.currency1.toLowerCase();
+
+    const usdg =
+      USDG.toLowerCase();
+
+    if (
+      c0 !== usdg &&
+      c1 !== usdg
+    ) {
+      continue;
+    }
+
+    const stockAddress =
+      c0 === usdg
+        ? key.currency1
+        : key.currency0;
+
+    try {
+
+      const info =
+        await tokenInfo(stockAddress);
+
+      if (info.symbol === "USDG") {
+        continue;
+      }
+
+      found.push({
+        id: pool.id,
+        key,
+        token: info
+      });
+
+    } catch {}
+  }
+
+  found.sort(
+    (a, b) =>
+      a.token.symbol.localeCompare(
+        b.token.symbol
+      )
+  );
+
+  discoveredPools = found;
+}
+
+
+/* =========================================================
+   BASKET UI
+   ========================================================= */
+
+const PRESETS = {
+
+  ai: [
+    { symbol: "NVDA", weight: 40 },
+    { symbol: "META", weight: 30 },
+    { symbol: "AAPL", weight: 30 }
+  ],
+
+  broad: [
+    { symbol: "SPY", weight: 70 },
+    { symbol: "GLD", weight: 30 }
+  ],
+
+  beta: [
+    { symbol: "TSLA", weight: 40 },
+    { symbol: "NVDA", weight: 35 },
+    { symbol: "AMC", weight: 25 }
+  ]
+
+};
+
+
+function loadPreset(name) {
+
+  const preset = PRESETS[name];
+
+  if (!preset) {
+    return;
+  }
+
+  basketRows.innerHTML = "";
+
+  for (const item of preset) {
+
+    const exists =
+      discoveredPools.some(
+        p => p.token.symbol === item.symbol
+      );
+
+    if (exists) {
+
+      addBasketRow(
+        item.symbol,
+        item.weight
+      );
+    }
+  }
+
+updateWeightTotal();
+invalidatePreparedTx();
+
+document
+  .querySelectorAll(".preset")
+  .forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.preset === name
+    );
+  });
+}
+
+function poolOptions(selectedSymbol = "") {
+
+  return discoveredPools
+    .map(pool => {
+
+      const selected =
+        pool.token.symbol === selectedSymbol
+          ? "selected"
+          : "";
+
+      return `
+        <option
+          value="${pool.token.symbol}"
+          ${selected}
+        >
+          ${pool.token.symbol}
+        </option>
+      `;
+
+    })
+    .join("");
+}
+
+function addBasketRow(
+  symbol = "",
+  weight = 0
+) {
+
+  const row =
+    document.createElement("div");
+
+  row.className = "basket-row";
+
+  row.innerHTML = `
+
+    <div style="
+      display:grid;
+      grid-template-columns: minmax(0, 1fr) 120px auto;
+      gap:12px;
+      align-items:end;
+      padding:12px;
+      margin-bottom:10px;
+      border:1px solid #ddd;
+      border-radius:10px;
+    ">
+
+      <div>
+        <label>Stock</label>
+
+        <select
+          class="stock"
+          style="width:100%;"
+        >
+          ${poolOptions(symbol)}
+        </select>
+      </div>
+
+      <div>
+        <label>Weight %</label>
+
+        <input
+          class="weight"
+          type="number"
+          min="0"
+          max="100"
+          step="1"
+          value="${weight}"
+          style="width:100%;"
+        />
+      </div>
+
+      <button
+        class="remove"
+        type="button"
+        style="
+          padding:10px 14px;
+          white-space:nowrap;
+        "
+      >
+        Remove
+      </button>
+
+    </div>
+  `;
+
+  row
+    .querySelector(".weight")
+    .addEventListener(
+      "input",
+      () => {
+        updateWeightTotal();
+        invalidatePreparedTx();
+      }
+    );
+
+  row
+    .querySelector(".stock")
+    .addEventListener(
+      "change",
+      invalidatePreparedTx
+    );
+
+  row
+    .querySelector(".remove")
+    .onclick = () => {
+
+      row.remove();
+
+      updateWeightTotal();
+      invalidatePreparedTx();
+    };
+
+  basketRows.appendChild(row);
+
+  updateWeightTotal();
+}
+
+
+function updateWeightTotal() {
+
+  const weights =
+    [...document.querySelectorAll(".weight")];
+
+  const total =
+    weights.reduce(
+      (sum, input) =>
+        sum + Number(input.value || 0),
+      0
+    );
+
+  weightTotal.textContent =
+    total.toFixed(2) + "%";
+
+  if (
+    Math.abs(total - 100) < 0.0001
+  ) {
+
+    weightTotal.className =
+      "big-number status-good";
+
+  } else {
+
+    weightTotal.className =
+      "big-number status-bad";
+
+  }
+
+  invalidatePreparedTx();
+}
+
+
+function invalidatePreparedTx() {
+
+  preparedTransaction = null;
+
+  sendButton.disabled = true;
+
+  sendButton.textContent =
+    "Send Basket";
+
+  simulateButton.textContent =
+    "Build + Simulate Basket";
+
+  clearQuoteSummary();
+
+  document
+    .querySelectorAll(".preset")
+    .forEach(button => {
+      button.classList.remove("active");
+    });
+}
+
+
+function getBasketDefinition() {
+
+  const rows =
+    [...basketRows.querySelectorAll(
+      ".basket-row"
+    )];
+
+  if (rows.length === 0) {
+    throw new Error(
+      "Add at least one stock."
+    );
+  }
+
+  const basket =
+    rows.map(row => ({
+
+      symbol:
+        row.querySelector(
+          ".stock"
+        ).value,
+
+      weight:
+        Number(
+          row.querySelector(
+            ".weight"
+          ).value
+        )
+
+    }));
+
+
+  const totalWeight =
+    basket.reduce(
+      (sum, item) =>
+        sum + item.weight,
+      0
+    );
+
+
+  if (
+    Math.abs(
+      totalWeight - 100
+    ) > 0.0001
+  ) {
+
+    throw new Error(
+      `Weights total ${totalWeight}%. They must equal 100%.`
+    );
+  }
+
+
+  const symbols =
+    basket.map(x => x.symbol);
+
+  const unique =
+    new Set(symbols);
+
+  if (
+    unique.size !== symbols.length
+  ) {
+
+    throw new Error(
+      "A stock can only appear once in the basket."
+    );
+  }
+
+
+  for (const item of basket) {
+
+    if (
+      item.weight <= 0
+    ) {
+
+      throw new Error(
+        `${item.symbol} must have a weight greater than 0%.`
+      );
+    }
+  }
+
+  return basket;
+}
+
+
+/* =========================================================
+   WALLET STATUS
+   ========================================================= */
+
+async function readWalletStatus(
+  requiredAmount
+) {
+
+  const usdg =
+    new Contract(
+      USDG,
+      ERC20_ABI,
+      provider
+    );
+
+  const permit2 =
+    new Contract(
+      PERMIT2,
+      PERMIT2_ABI,
+      provider
+    );
+
+  const [
+    balance,
+    erc20Allowance,
+    permitAllowance
+  ] =
+    await Promise.all([
+
+      usdg.balanceOf(
+        walletAddress
+      ),
+
+      usdg.allowance(
+        walletAddress,
+        PERMIT2
+      ),
+
+      permit2.allowance(
+        walletAddress,
+        USDG,
+        UNIVERSAL_ROUTER
+      )
+
+    ]);
+
+
+  const expiration =
+    Number(
+      permitAllowance.expiration
+    );
+
+  const now =
+    Math.floor(
+      Date.now() / 1000
+    );
+
+
+  return {
+
+    balance,
+
+    erc20Allowance,
+
+    permitAmount:
+      permitAllowance.amount,
+
+    permitExpiration:
+      expiration,
+
+    balanceOK:
+      balance >= requiredAmount,
+
+    erc20OK:
+      erc20Allowance >= requiredAmount,
+
+    permitOK:
+      permitAllowance.amount >= requiredAmount
+      &&
+      expiration > now
+  };
+}
+
+/* =========================================================
+   PERMISSION STATUS UI
+   ========================================================= */
+
+async function refreshPermissionStatus() {
+
+  try {
+
+    if (!walletAddress) {
+      permissionStatus.innerHTML =
+        "<div>Connect MetaMask first.</div>";
+      return;
+    }
+
+    const totalUSDG =
+      Number(totalAmountInput.value);
+
+    if (
+      !Number.isFinite(totalUSDG)
+      ||
+      totalUSDG <= 0
+    ) {
+      permissionStatus.innerHTML =
+        "<div>Enter a valid basket amount.</div>";
+      return;
+    }
+
+    const requiredAmount =
+      parseUnits(
+        totalUSDG.toFixed(6),
+        6
+      );
+
+    const status =
+      await readWalletStatus(
+        requiredAmount
+      );
+
+    const usdgClass =
+      status.erc20OK
+        ? "status-good"
+        : "status-bad";
+
+    const routerClass =
+      status.permitOK
+        ? "status-good"
+        : "status-bad";
+
+    const usdgText =
+      status.erc20OK
+        ? "✓ Enabled"
+        : "✕ Needs approval";
+let routerText;
+
+const now =
+  Math.floor(Date.now() / 1000);
+
+if (status.permitOK) {
+
+  routerText = "✓ Enabled";
+
+} else if (
+  status.permitExpiration === 0
+) {
+
+  routerText = "✕ Not enabled";
+
+} else if (
+  status.permitExpiration <= now
+) {
+
+  routerText = "✕ Expired";
+
+} else {
+
+  routerText = "✕ Allowance too low";
+}
+
+    permissionStatus.innerHTML = `
+      <div><b>Trading permissions</b></div>
+
+      <div class="${usdgClass}">
+        USDG access: ${usdgText}
+      </div>
+
+      <div class="${routerClass}">
+        Router access: ${routerText}
+      </div>
+
+      <div class="small" style="margin-top:6px;">
+        USDG → Permit2 allowance:
+        ${formatUnits(
+          status.erc20Allowance,
+          6
+        )} USDG
+      </div>
+
+      <div class="small">
+  Permit2 → Router allowance:
+  ${formatUnits(
+    status.permitAmount,
+    6
+  )} USDG
+</div>
+
+<div class="small">
+  Router permission expires:
+  ${
+    status.permitExpiration === 0
+      ? "Not set"
+      : new Date(
+          status.permitExpiration * 1000
+        ).toLocaleString()
+  }
+</div>
+    `;
+
+    approveUSDGButton.style.display =
+      status.erc20OK
+        ? "none"
+        : "inline-block";
+
+    renewPermitButton.style.display =
+      status.permitOK
+        ? "none"
+        : "inline-block";
+
+  } catch (error) {
+
+    permissionStatus.innerHTML =
+      `<div class="status-bad">
+        Could not read permissions.
+      </div>`;
+  }
+}
+
+
+/* =========================================================
+   CONNECT METAMASK
+   ========================================================= */
+
+connectButton.onclick =
+async () => {
+
+  try {
+
+    if (!window.ethereum) {
+
+      throw new Error(
+        "MetaMask was not detected."
+      );
+    }
+
+
+    provider =
+      new BrowserProvider(
+        window.ethereum
+      );
+
+
+    await provider.send(
+      "eth_requestAccounts",
+      []
+    );
+
+
+    signer =
+      await provider.getSigner();
+
+
+    walletAddress =
+      await signer.getAddress();
+
+
+    const network =
+      await provider.getNetwork();
+
+
+    if (
+      network.chainId !== CHAIN_ID
+    ) {
+
+      throw new Error(
+        "MetaMask must be on Robinhood Chain (4663)."
+      );
+    }
+
+
+    walletInfo.innerHTML = `
+
+      <div class="status-good">
+        Connected
+      </div>
+
+      <div>
+        ${walletAddress}
+      </div>
+
+      <div>
+        Chain ID:
+        ${network.chainId}
+      </div>
+    `;
+
+
+    clearOutput();
+
+    log("Discovering active Fables stock pools...");
+
+
+    await discoverPools();
+
+
+    log(
+      `Found ${discoveredPools.length} USDG pools.`
+    );
+
+
+    basketRows.innerHTML = "";
+
+
+    const defaults = [
+      ["NVDA", 40],
+      ["SPY", 35],
+      ["AAPL", 25]
+    ];
+
+
+    for (
+      const [symbol, weight]
+      of defaults
+    ) {
+
+      if (
+        discoveredPools.some(
+          p =>
+            p.token.symbol === symbol
+        )
+      ) {
+
+        addBasketRow(
+          symbol,
+          weight
+        );
+      }
+    }
+
+
+simulateButton.disabled = false;
+addStockButton.disabled = false;
+approveUSDGButton.disabled = false;
+renewPermitButton.disabled = false;
+
+await refreshPermissionStatus();
+
+
+    log("");
+    log(
+      "Ready to build a basket."
+    );
+
+  } catch (error) {
+
+    walletInfo.innerHTML =
+      `<span class="status-bad">
+        ${error.shortMessage || error.message}
+      </span>`;
+  }
+};
+
+
+/* =========================================================
+   ADD STOCK
+   ========================================================= */
+
+addStockButton.onclick =
+() => {
+
+  if (
+    discoveredPools.length === 0
+  ) {
+    return;
+  }
+
+  addBasketRow(
+    discoveredPools[0]
+      .token.symbol,
+    0
+  );
+};
+
+/* =========================================================
+   APPROVE USDG TO PERMIT2
+   ========================================================= */
+
+approveUSDGButton.onclick =
+async () => {
+
+  try {
+
+    if (!signer || !walletAddress) {
+      throw new Error(
+        "Connect MetaMask first."
+      );
+    }
+
+    const totalUSDG =
+      Number(totalAmountInput.value);
+
+    if (
+      !Number.isFinite(totalUSDG)
+      ||
+      totalUSDG <= 0
+    ) {
+      throw new Error(
+        "Enter a valid USDG amount first."
+      );
+    }
+
+    const amountRaw =
+      parseUnits(
+        totalUSDG.toFixed(6),
+        6
+      );
+
+    const usdgWrite =
+      new Contract(
+        USDG,
+        [
+          "function approve(address spender,uint256 amount) returns (bool)"
+        ],
+        signer
+      );
+
+    clearOutput();
+
+    log("Preparing USDG permission...");
+    log("");
+    log("Token: USDG");
+    log("Spender: Permit2");
+    log(
+      "Amount: " +
+      totalUSDG +
+      " USDG"
+    );
+    log("");
+    log("Opening MetaMask...");
+
+    const tx =
+      await usdgWrite.approve(
+        PERMIT2,
+        amountRaw
+      );
+
+    log("");
+    log(
+      "USDG approval submitted:"
+    );
+    log(tx.hash);
+
+    log("");
+    log(
+      "Waiting for confirmation..."
+    );
+
+    const receipt =
+      await tx.wait();
+
+    if (
+      receipt.status !== 1
+    ) {
+      throw new Error(
+        "USDG approval transaction reverted."
+      );
+    }
+
+    log("");
+    log(
+      "✅ USDG PERMISSION ENABLED"
+    );
+
+    log(
+      "Gas used: " +
+      receipt.gasUsed.toString()
+    );
+
+    invalidatePreparedTx();
+await refreshPermissionStatus();
+
+  } catch (error) {
+
+    log("");
+    log(
+      "USDG PERMISSION FAILED / CANCELLED"
+    );
+
+    log(
+      error.shortMessage
+      ||
+      error.message
+    );
+  }
+};
+
+/* =========================================================
+   RENEW PERMIT2 ROUTER PERMISSION
+   ========================================================= */
+
+renewPermitButton.onclick =
+async () => {
+
+  try {
+
+    if (!signer || !walletAddress) {
+      throw new Error(
+        "Connect MetaMask first."
+      );
+    }
+
+    const totalUSDG =
+      Number(totalAmountInput.value);
+
+    if (
+      !Number.isFinite(totalUSDG)
+      ||
+      totalUSDG <= 0
+    ) {
+      throw new Error(
+        "Enter a valid USDG amount first."
+      );
+    }
+
+    const amountRaw =
+      parseUnits(
+        totalUSDG.toFixed(6),
+        6
+      );
+
+    /*
+      Permission lasts 24 hours.
+    */
+
+    const expiration =
+      Math.floor(Date.now() / 1000)
+      +
+      24 * 60 * 60;
+
+    const permit2Write =
+      new Contract(
+        PERMIT2,
+        [
+          "function approve(address token,address spender,uint160 amount,uint48 expiration)"
+        ],
+        signer
+      );
+
+    clearOutput();
+
+    log("Preparing Permit2 router permission...");
+    log("");
+    log(
+      "Token: USDG"
+    );
+    log(
+      "Spender: Universal Router"
+    );
+    log(
+      "Amount: " +
+      totalUSDG +
+      " USDG"
+    );
+    log(
+      "Expiration: " +
+      new Date(
+        expiration * 1000
+      ).toLocaleString()
+    );
+    log("");
+    log(
+      "Opening MetaMask..."
+    );
+
+    const tx =
+      await permit2Write.approve(
+        USDG,
+        UNIVERSAL_ROUTER,
+        amountRaw,
+        expiration
+      );
+
+    log("");
+    log(
+      "Permission transaction submitted:"
+    );
+    log(tx.hash);
+
+    log("");
+    log(
+      "Waiting for confirmation..."
+    );
+
+    const receipt =
+      await tx.wait();
+
+    if (
+      receipt.status !== 1
+    ) {
+      throw new Error(
+        "Permit2 approval transaction reverted."
+      );
+    }
+
+    log("");
+    log(
+      "✅ ROUTER PERMISSION RENEWED"
+    );
+
+    log(
+      "Gas used: " +
+      receipt.gasUsed.toString()
+    );
+
+    invalidatePreparedTx();
+
+  } catch (error) {
+
+    log("");
+    log(
+      "PERMISSION UPDATE FAILED / CANCELLED"
+    );
+
+    log(
+      error.shortMessage
+      ||
+      error.message
+    );
+  }
+};
+
+/* =========================================================
+   SIMULATE
+   ========================================================= */
+
+simulateButton.onclick =
+async () => {
+
+  try {
+
+    invalidatePreparedTx();
+
+    clearOutput();
+
+    const basket =
+      getBasketDefinition();
+
+
+    const totalUSDG =
+      Number(
+        totalAmountInput.value
+      );
+
+
+    if (
+      !Number.isFinite(totalUSDG)
+      ||
+      totalUSDG <= 0
+    ) {
+
+      throw new Error(
+        "Enter a valid USDG amount."
+      );
+    }
+
+if (totalUSDG < 0.01) {
+  throw new Error(
+    "Minimum basket size is 0.01 USDG."
+  );
+}
+
+
+    const totalRaw =
+      parseUnits(
+        totalUSDG.toFixed(6),
+        6
+      );
+
+const appFeeRaw =
+  totalRaw * APP_FEE_BPS / 10000n;
+
+const investRaw =
+  totalRaw - appFeeRaw;
+
+log(
+  `App fee: ${formatUnits(appFeeRaw, 6)} USDG`
+);
+
+log(
+  `Invested: ${formatUnits(investRaw, 6)} USDG`
+);
+
+
+    log(
+      `Basket total: ${totalUSDG} USDG`
+    );
+
+    log("");
+
+
+    /* ===========================
+       WALLET CHECKS
+       =========================== */
+
+    const wallet =
+      await readWalletStatus(
+        totalRaw
+      );
+
+
+    log("WALLET CHECK");
+    log("============================");
+
+    log(
+      "USDG balance: " +
+      formatUnits(
+        wallet.balance,
+        6
+      )
+    );
+
+
+    log(
+      "USDG → Permit2 allowance: " +
+      formatUnits(
+        wallet.erc20Allowance,
+        6
+      )
+    );
+
+
+    log(
+      "Permit2 → Router allowance: " +
+      formatUnits(
+        wallet.permitAmount,
+        6
+      )
+    );
+
+
+    if (!wallet.balanceOK) {
+
+      throw new Error(
+        "Not enough USDG."
+      );
+    }
+
+
+    if (!wallet.erc20OK) {
+
+      throw new Error(
+        "USDG → Permit2 allowance is too low for this basket."
+      );
+    }
+
+
+    if (!wallet.permitOK) {
+
+      throw new Error(
+        "Permit2 → Universal Router allowance is too low or expired."
+      );
+    }
+
+
+    log("");
+    log("Wallet permissions: OK");
+
+
+    /* ===========================
+       QUOTES
+       =========================== */
+
+    const quoter =
+      new Contract(
+        QUOTER,
+        QUOTER_ABI,
+        provider
+      );
+
+
+    const slippageBps =
+      BigInt(
+        slippageSelect.value
+      );
+
+
+    let commands = "0x";
+    const inputs = [];
+
+
+    log("");
+    log("LIVE V4 QUOTES");
+    log("============================");
+
+const quoteCards = [];
+
+let allocatedSoFar = 0n;
+
+    for (
+      let i = 0;
+      i < basket.length;
+      i++
+    ) {
+
+      const item =
+        basket[i];
+
+
+      const pool =
+        discoveredPools.find(
+          p =>
+            p.token.symbol ===
+            item.symbol
+        );
+
+
+      if (!pool) {
+
+        throw new Error(
+          `No pool found for ${item.symbol}.`
+        );
+      }
+
+
+      let allocation;
+
+
+/*
+  Allocate from the amount remaining
+  after the app fee.
+
+  Final leg receives the exact remainder
+  so no USDG is left behind from rounding.
+*/
+
+if (
+  i === basket.length - 1
+) {
+
+  allocation =
+    investRaw -
+    allocatedSoFar;
+
+} else {
+
+  const weightBps =
+    BigInt(
+      Math.round(
+        item.weight * 100
+      )
+    );
+
+  allocation =
+    investRaw *
+    weightBps /
+    10000n;
+}
+
+allocatedSoFar += allocation;
+
+if (allocation <= 0n) {
+  throw new Error(
+    `${item.symbol} allocation is too small. Increase the basket size or weight.`
+  );
+}
+
+
+      const key =
+        pool.key;
+
+
+      const zeroForOne =
+        key.currency0.toLowerCase()
+        ===
+        USDG.toLowerCase();
+
+
+      const quote =
+        await quoter
+          .quoteExactInputSingle
+          .staticCall({
+
+            poolKey: {
+
+              currency0:
+                key.currency0,
+
+              currency1:
+                key.currency1,
+
+              fee:
+                key.fee,
+
+              tickSpacing:
+                key.tickSpacing,
+
+              hooks:
+                key.hooks
+            },
+
+            zeroForOne,
+
+            exactAmount:
+              allocation,
+
+            hookData:
+              "0x"
+          });
+
+
+      const minAmountOut =
+
+        quote.amountOut *
+
+        (
+          BPS -
+          slippageBps
+        )
+
+        /
+
+        BPS;
+
+
+      let dynamicFee = null;
+
+
+      try {
+
+        const hook =
+          new Contract(
+            key.hooks,
+            HOOK_ABI,
+            provider
+          );
+
+        dynamicFee =
+          await hook.currentFee(
+            pool.id,
+            zeroForOne
+          );
+
+      } catch {}
+
+quoteCards.push({
+
+  symbol:
+    item.symbol,
+
+  allocation: 
+    formatUnits(
+      allocation,
+      6
+    ),
+
+  expected:
+    formatUnits(
+      quote.amountOut,
+      pool.token.decimals
+    ),
+
+  minimum:
+    formatUnits(
+      minAmountOut,
+      pool.token.decimals
+    ),
+
+  fee:
+    dynamicFee !== null
+      ? (
+          Number(dynamicFee) / 10000
+        ).toFixed(4) + "%"
+      : "Unknown"
+
+});
+
+
+      log("");
+      log(item.symbol);
+      log("----------------------------");
+
+      log(
+        "Allocation: " +
+        formatUnits(
+          allocation,
+          6
+        ) +
+        " USDG"
+      );
+
+
+      log(
+        "Expected: " +
+        formatUnits(
+          quote.amountOut,
+          pool.token.decimals
+        ) +
+        " " +
+        item.symbol
+      );
+
+
+      log(
+        "Minimum: " +
+        formatUnits(
+          minAmountOut,
+          pool.token.decimals
+        ) +
+        " " +
+        item.symbol
+      );
+
+
+      if (
+        dynamicFee !== null
+      ) {
+
+        log(
+          "Dynamic fee: " +
+          (
+            Number(dynamicFee)
+            /
+            10000
+          ).toFixed(4)
+          +
+          "%"
+        );
+      }
+
+
+      /* ===========================
+         BUILD V4 SWAP
+         =========================== */
+
+      const swapParam =
+        abi.encode(
+          [
+            `tuple(
+              tuple(
+                address currency0,
+                address currency1,
+                uint24 fee,
+                int24 tickSpacing,
+                address hooks
+              ) poolKey,
+              bool zeroForOne,
+              uint128 amountIn,
+              uint128 amountOutMinimum,
+              uint256 minHopPriceX36,
+              bytes hookData
+            )`
+          ],
+
+          [
+            {
+
+              poolKey: {
+
+                currency0:
+                  key.currency0,
+
+                currency1:
+                  key.currency1,
+
+                fee:
+                  key.fee,
+
+                tickSpacing:
+                  key.tickSpacing,
+
+                hooks:
+                  key.hooks
+              },
+
+              zeroForOne,
+
+              amountIn:
+                allocation,
+
+              amountOutMinimum:
+                minAmountOut,
+
+              minHopPriceX36:
+                0,
+
+              hookData:
+                "0x"
+            }
+          ]
+        );
+
+
+      const inputCurrency =
+        zeroForOne
+          ? key.currency0
+          : key.currency1;
+
+
+      const outputCurrency =
+        zeroForOne
+          ? key.currency1
+          : key.currency0;
+
+
+      const settleParam =
+        abi.encode(
+          [
+            "address",
+            "uint256"
+          ],
+
+          [
+            inputCurrency,
+            allocation
+          ]
+        );
+
+
+      const takeParam =
+        abi.encode(
+          [
+            "address",
+            "uint256"
+          ],
+
+          [
+            outputCurrency,
+            minAmountOut
+          ]
+        );
+
+
+      const actions =
+        hexlify(
+          Uint8Array.from([
+            SWAP_EXACT_IN_SINGLE,
+            SETTLE_ALL,
+            TAKE_ALL
+          ])
+        );
+
+
+      const v4Input =
+        abi.encode(
+          [
+            "bytes",
+            "bytes[]"
+          ],
+
+          [
+            actions,
+
+            [
+              swapParam,
+              settleParam,
+              takeParam
+            ]
+          ]
+        );
+
+
+      commands +=
+
+        V4_SWAP
+          .toString(16)
+          .padStart(2, "0");
+
+
+      inputs.push(
+        v4Input
+      );
+    }
+
+/* ===========================
+   APP FEE TRANSFER
+   =========================== */
+
+if (appFeeRaw > 0n) {
+
+  const feeInput =
+    abi.encode(
+      [
+        "address",
+        "address",
+        "uint160"
+      ],
+      [
+        USDG,
+        APP_FEE_RECIPIENT,
+        appFeeRaw
+      ]
+    );
+
+  commands +=
+    PERMIT2_TRANSFER_FROM
+      .toString(16)
+      .padStart(2, "0");
+
+  inputs.push(
+    feeInput
+  );
+}
+
+
+    /* ===========================
+       UNIVERSAL ROUTER TX
+       =========================== */
+
+    const deadline =
+      Math.floor(
+        Date.now() / 1000
+      )
+      +
+      900;
+
+
+    const routerInterface =
+      new Interface(
+        ROUTER_ABI
+      );
+
+
+    const calldata =
+      routerInterface
+        .encodeFunctionData(
+          "execute",
+          [
+            commands,
+            inputs,
+            deadline
+          ]
+        );
+
+
+    preparedTransaction = {
+
+      from:
+        walletAddress,
+
+      to:
+        UNIVERSAL_ROUTER,
+
+      data:
+        calldata,
+
+      value:
+        0n
+    };
+
+
+    /* ===========================
+       FINAL SIMULATION
+       =========================== */
+
+    log("");
+    log("============================");
+    log("FINAL TRANSACTION SIMULATION");
+    log("============================");
+
+
+    await provider.call(
+      preparedTransaction
+    );
+
+
+    const gasEstimate =
+      await provider.estimateGas(
+        preparedTransaction
+      );
+
+
+    log("");
+
+quoteSummary.innerHTML = `
+
+  <div style="
+    border:1px solid #ccc;
+    border-radius:10px;
+    padding:14px;
+  ">
+
+    <div style="
+      font-weight:bold;
+      margin-bottom:10px;
+      font-size:18px;
+    ">
+      Basket Preview
+    </div>
+
+    <div style="
+      padding:10px 0;
+      margin-bottom:6px;
+    ">
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+      ">
+        <span>Total</span>
+        <b>${formatUnits(totalRaw, 6)} USDG</b>
+      </div>
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+      ">
+        <span>
+          App fee (${(Number(APP_FEE_BPS) / 100).toFixed(2)}%)
+        </span>
+        <span>${formatUnits(appFeeRaw, 6)} USDG</span>
+      </div>
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+      ">
+        <span>Invested</span>
+        <span>${formatUnits(investRaw, 6)} USDG</span>
+      </div>
+
+    </div>
+
+    ${
+      quoteCards
+        .map(card => `
+
+          <div style="
+            padding:10px 0;
+            border-top:1px solid #eee;
+          ">
+
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              gap:20px;
+            ">
+              <b>${card.symbol}</b>
+              <span>${card.allocation} USDG</span>
+            </div>
+
+            <div class="small">
+              Expected: ${card.expected} ${card.symbol}
+            </div>
+
+            <div class="small">
+              Minimum: ${card.minimum} ${card.symbol}
+            </div>
+
+            <div class="small">
+              Dynamic fee: ${card.fee}
+            </div>
+
+          </div>
+
+        `)
+        .join("")
+    }
+
+  </div>
+`;
+    log("✅ SIMULATION SUCCESSFUL");
+
+
+    log(
+      "Basket legs: " +
+      basket.length
+    );
+
+
+    log(
+      "Total USDG: " +
+      totalUSDG
+    );
+
+
+    log(
+      "Commands: " +
+      commands
+    );
+
+
+    log(
+      "Estimated gas: " +
+      gasEstimate.toString()
+    );
+
+
+    log(
+      "Router: " +
+      UNIVERSAL_ROUTER
+    );
+
+
+    log("");
+    log(
+      "Nothing has been signed or sent."
+    );
+
+
+    sendButton.disabled = false;
+
+startQuoteTimer(45);
+
+
+  } catch (error) {
+
+    preparedTransaction = null;
+
+    sendButton.disabled = true;
+
+    log("");
+    log("❌ STOPPED");
+   log(
+  friendlyError(error)
+);
+  }
+};
+
+
+/* =========================================================
+   SEND
+   ========================================================= */
+
+sendButton.onclick =
+async () => {
+
+  try {
+
+    if (!preparedTransaction) {
+
+if (
+  !quoteExpiresAt
+  ||
+  Date.now() >= quoteExpiresAt
+) {
+
+  throw new Error(
+    "Quote expired. Build and simulate again."
+  );
+}
+
+      throw new Error(
+        "Build and simulate the basket first."
+      );
+    }
+
+
+    /*
+      Re-simulate immediately
+      before asking MetaMask to sign.
+    */
+
+    await provider.call(
+      preparedTransaction
+    );
+
+
+    const network =
+      await provider.getNetwork();
+
+
+    if (
+      network.chainId !== CHAIN_ID
+    ) {
+
+      throw new Error(
+        "Network changed. Transaction cancelled."
+      );
+    }
+
+
+    sendButton.disabled = true;
+
+
+    log("");
+    log(
+      "Opening MetaMask..."
+    );
+
+
+    const tx =
+      await signer.sendTransaction({
+
+        to:
+          preparedTransaction.to,
+
+        data:
+          preparedTransaction.data,
+
+        value:
+          0n
+      });
+
+
+    log("");
+    log(
+      "Transaction submitted:"
+    );
+
+    log(
+      tx.hash
+    );
+
+
+    log("");
+    log(
+      "Waiting for confirmation..."
+    );
+
+
+    const receipt =
+      await tx.wait();
+
+
+    if (
+      receipt.status === 1
+    ) {
+
+      log("");
+      log("============================");
+      log("✅ TRANSACTION CONFIRMED");
+      log("============================");
+
+      log(
+        "Block: " +
+        receipt.blockNumber
+      );
+
+      log(
+        "Gas used: " +
+        receipt.gasUsed.toString()
+      );
+
+    } else {
+
+      log("");
+      log(
+        "❌ TRANSACTION REVERTED"
+      );
+    }
+
+
+  } catch (error) {
+
+        log("");
+    log(
+      "SEND CANCELLED / FAILED"
+    );
+
+   log(
+  friendlyError(error)
+);
+  }
+};
+
+document
+  .querySelectorAll(".preset")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        document
+          .querySelectorAll(".preset")
+          .forEach(otherButton => {
+            otherButton.classList.remove("active");
+          });
+
+        button.classList.add("active");
+
+        loadPreset(
+          button.dataset.preset
+        );
+
+      }
+    );
+
+  });
+
+/* =========================================================
+   INVALIDATE OLD QUOTES WHEN USER EDITS
+   ========================================================= */
+
+totalAmountInput.addEventListener(
+  "input",
+  async () => {
+    invalidatePreparedTx();
+
+    if (walletAddress) {
+      await refreshPermissionStatus();
+    }
+  }
+);
+
+slippageSelect.addEventListener(
+  "change",
+  invalidatePreparedTx
+);
+
+</script>
+
+</body>
+</html>
