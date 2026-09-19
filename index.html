@@ -181,20 +181,23 @@
    ========================================================= */
 
 :root {
-  --bg: #0b0e11;
-  --surface: #12161b;
-  --surface-2: #181d23;
-  --border: #272d35;
+  --bg: #09070f;
+  --surface: #120d1c;
+  --surface-2: #1a1228;
+  --surface-3: #21162f;
 
-  --text: #f4f6f8;
-  --muted: #8f9aa6;
+  --border: #30213f;
 
-  --accent: #37e88d;
-  --accent-hover: #54f5a2;
+  --text: #f7f3ff;
+  --muted: #a79eb6;
 
-  --danger: #ff6464;
+  --accent: #9b5cff;
+  --accent-hover: #ad78ff;
 
-  --radius: 14px;
+  --success: #45d69b;
+  --danger: #ff6f86;
+
+  --radius: 16px;
 }
 
 
@@ -230,7 +233,7 @@ body {
 main {
   max-width: 980px;
   margin: 0 auto;
-  padding: 40px 20px 80px;
+  padding: 28px 20px 64px;
 }
 
 
@@ -269,10 +272,10 @@ h3 {
   border-radius: var(--radius);
 
   padding: 22px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 
   box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.22);
+    0 10px 28px rgba(0, 0, 0, 0.2);
 }
 
 
@@ -453,126 +456,1061 @@ pre {
   color: var(--muted);
 }
 
+/* =========================================================
+   HEADER + WALLET
+   ========================================================= */
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 22px 20px 10px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #7c3aed,
+      #b06cff
+    );
+
+  color: white;
+  font-size: 20px;
+  font-weight: 800;
+
+  box-shadow:
+    0 0 24px rgba(155, 92, 255, 0.28);
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.brand-tagline {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.network-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 9px 12px;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  background: var(--surface);
+
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: var(--success);
+
+  box-shadow:
+    0 0 10px rgba(69, 214, 155, 0.6);
+}
+
+.wallet-button {
+  background: var(--accent) !important;
+  color: #0b0612 !important;
+  border-color: var(--accent) !important;
+
+  border-radius: 999px !important;
+  padding: 10px 16px !important;
+}
+
+.wallet-button:hover:not(:disabled) {
+  background: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+.wallet-panel {
+  max-width: 980px;
+  margin: 0 auto 18px;
+  padding: 12px 16px;
+
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(33, 22, 47, 0.95),
+      rgba(18, 13, 28, 0.95)
+    );
+}
+
+.wallet-status-row {
+  flex: 1;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+
+  min-width: 0;
+}
+
+.wallet-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.wallet-info {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.permission-status {
+  text-align: right;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.permission-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-top: 0;
+}
+
+.permission-actions button[style*="display: none"] {
+  display: none !important;
+}
+
+.permission-actions:has(
+  #approveUSDG[style*="display: none"]
+):has(
+  #renewPermit[style*="display: none"]
+) {
+  display: none;
+}
+
+.permission-actions button {
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+/* =========================================================
+   BASKET BUILDER
+   ========================================================= */
+
+.builder-card {
+  padding: 22px;
+}
+
+.builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.builder-header h3 {
+  margin-bottom: 4px;
+}
+
+.builder-header .small {
+  margin: 0;
+}
+
+.slippage-compact {
+  min-width: 110px;
+}
+
+.slippage-compact label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.slippage-compact select {
+  width: 100%;
+}
+
+.builder-section {
+  padding: 16px 0;
+}
+
+.builder-section + .builder-section {
+  border-top: 1px solid var(--border);
+}
+
+.amount-input-wrap {
+  display: flex;
+  align-items: center;
+
+  width: 220px;
+
+  margin-top: 6px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: #0d0913;
+}
+
+.amount-input-wrap input {
+  flex: 1;
+
+  min-width: 0;
+
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.amount-input-wrap input:focus {
+  box-shadow: none;
+}
+
+.amount-input-wrap span {
+  padding-right: 12px;
+
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.section-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.section-label {
+  margin-bottom: 8px;
+
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.allocation-summary {
+  text-align: right;
+}
+
+.allocation-summary span {
+  display: block;
+
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.allocation-summary strong {
+  font-size: 20px;
+}
+
+#basketRows {
+  margin-bottom: 12px;
+}
+
+.basket-asset-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px auto;
+  gap: 14px;
+  align-items: center;
+
+  padding: 14px;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  background: #0d0913;
+
+  margin-bottom: 10px;
+}
+
+.asset-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  min-width: 0;
+}
+
+.asset-badge {
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #241537,
+      #392055
+    );
+
+  border: 1px solid #4a2b68;
+
+  color: #d8c2ff;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.asset-copy {
+  min-width: 0;
+}
+
+.asset-select-wrap select {
+  width: 100%;
+  min-width: 150px;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.asset-subtitle {
+  margin-top: 5px;
+
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.asset-weight label {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.weight-input-wrap {
+  display: flex;
+  align-items: center;
+
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  background: #0a0710;
+}
+
+.weight-input-wrap input {
+  width: 82px;
+
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.weight-input-wrap input:focus {
+  box-shadow: none;
+}
+
+.weight-input-wrap span {
+  padding-right: 10px;
+
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.basket-asset-row .remove {
+  height: 42px;
+}
+
+
+/* =========================================================
+   TRADE / QUOTE CARD
+   ========================================================= */
+
+.trade-card {
+  padding: 22px;
+}
+
+.trade-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.trade-card-header h3 {
+  margin-bottom: 4px;
+}
+
+.trade-card-header .small {
+  margin: 0;
+}
+
+.quote-status {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.quote-summary:empty {
+  display: none;
+}
+
+.trade-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.trade-actions button {
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+.primary-action {
+  flex: 1;
+
+  background: var(--accent) !important;
+  color: #0b0612 !important;
+  border-color: var(--accent) !important;
+
+  font-weight: 800;
+}
+
+.primary-action:hover:not(:disabled) {
+  background: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+.secondary-action {
+  background: var(--surface-3) !important;
+  color: var(--text) !important;
+}
+
+.transaction-details {
+  margin-top: 18px;
+
+  border-top: 1px solid var(--border);
+
+  padding-top: 14px;
+}
+
+.transaction-details summary {
+  color: var(--muted);
+
+  cursor: pointer;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  user-select: none;
+}
+
+.transaction-details pre {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.quote-summary {
+  margin-top: 4px;
+}
+
+.quote-summary > div {
+  border-radius: 12px !important;
+  padding: 16px !important;
+}
+
+.trade-actions {
+  align-items: stretch;
+}
+
+.secondary-action {
+  min-width: 150px;
+}
+
+.primary-action {
+  min-width: 180px;
+}
+
+.transaction-details {
+  opacity: 0.9;
+}
+
+.transaction-details summary:hover {
+  color: var(--text);
+}
+
+.quote-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 150px;
+
+  padding: 24px;
+
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+
+  background: rgba(13, 9, 19, 0.45);
+
+  text-align: center;
+}
+
+.quote-empty-icon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 10px;
+
+  border-radius: 12px;
+
+  background: var(--surface-3);
+  color: var(--accent);
+
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.quote-empty-title {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.quote-empty-text {
+  max-width: 320px;
+
+  margin-top: 5px;
+
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.quote-error {
+  padding: 16px 18px;
+
+  border: 1px solid rgba(255, 111, 134, 0.35);
+  border-radius: 12px;
+
+  background: rgba(255, 111, 134, 0.08);
+}
+
+.quote-error-title {
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.quote-error-text {
+  margin-top: 5px;
+
+  color: #ff9bad;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.tx-status {
+  margin-top: 12px;
+}
+
+.tx-status:empty {
+  display: none;
+}
+
+.tx-status-box {
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.tx-status-pending,
+.tx-status-submitted {
+  border: 1px solid rgba(155, 92, 255, 0.35);
+  background: rgba(155, 92, 255, 0.08);
+  color: #c7a8ff;
+}
+
+.tx-status-success {
+  border: 1px solid rgba(69, 214, 155, 0.35);
+  background: rgba(69, 214, 155, 0.08);
+  color: var(--success);
+}
+
+.tx-status-error {
+  border: 1px solid rgba(255, 111, 134, 0.35);
+  background: rgba(255, 111, 134, 0.08);
+  color: #ff9bad;
+}
+
+.tx-link {
+  display: inline-block;
+
+  margin-top: 6px;
+
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+
+  text-decoration: none;
+}
+
+.tx-link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.quote-overview {
+  padding: 14px 16px;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  background: var(--surface-2);
+}
+
+.quote-overview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  padding: 5px 0;
+
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.quote-overview-row span:last-child,
+.quote-overview-row strong {
+  color: var(--text);
+}
+
+.quote-overview-total {
+  padding-bottom: 9px;
+  margin-bottom: 5px;
+
+  border-bottom: 1px solid var(--border);
+
+  font-size: 15px;
+}
+
+.quote-overview-total strong {
+  font-size: 16px;
+}
+
+.quote-assets {
+  margin-top: 12px;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  overflow: hidden;
+}
+
+.quote-asset {
+  padding: 14px 16px;
+
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.quote-asset + .quote-asset {
+  border-top: 1px solid var(--border);
+}
+
+.quote-asset-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 8px;
+
+  color: var(--text);
+  font-size: 14px;
+}
+
+.quote-asset-header strong {
+  color: var(--accent);
+  font-size: 15px;
+}
+
+.quote-asset-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+
+  padding: 3px 0;
+
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quote-asset-row span:last-child {
+  color: var(--text);
+  text-align: right;
+}
+
 </style>
-  
+
+ 
 </head>
 
 <body>
 
-<h1>Robinhood Chain Basket Builder</h1>
-<p class="subtitle">
-  Build a portfolio of Robinhood Stock Tokens and execute it in one transaction.
-</p>
+<header class="topbar">
 
-<div class="card">
-  <h3>1. Wallet</h3>
+  <div class="brand">
+    <div class="brand-mark">
+      S
+    </div>
 
-  <button id="connect">Connect MetaMask</button>
+    <div>
+      <div class="brand-name">
+        StockStack
+      </div>
 
-  <div id="walletInfo">
-  Not connected.
-</div>
+      <div class="brand-tagline">
+        Build tokenized stock baskets in one transaction
+      </div>
+    </div>
+  </div>
 
-<div id="permissionStatus" style="margin-top:14px;">
-  <div>Trading permissions not checked yet.</div>
-</div>
+  <div class="topbar-actions">
 
-<div style="margin-top:12px;">
-  <button id="approveUSDG" disabled>
-    Enable USDG
-  </button>
+    <div class="network-pill">
+      <span class="status-dot"></span>
+      Robinhood Chain
+    </div>
 
-  <button id="renewPermit" disabled>
-    Enable Router
-  </button>
-</div>
-</div>
+    <button
+      id="connect"
+      class="wallet-button"
+      type="button"
+    >
+      Connect Wallet
+    </button>
 
+  </div>
 
-<div class="card">
-  <h3>2. Investment Amount</h3>
+</header>
 
-  <label for="totalAmount">
-    Total USDG
-  </label>
+<div class="wallet-panel">
 
-  <input
-    id="totalAmount"
-    type="number"
-    min="0.01"
-    step="0.01"
-    value="3"
-  />
+  <div class="wallet-status-row">
 
-  <p class="small">
-    This is the maximum USDG the basket will spend.
-  </p>
-</div>
+    <div>
+      <div class="wallet-label">
+        Wallet
+      </div>
 
+      <div id="walletInfo" class="wallet-info">
+        Not connected.
+      </div>
+    </div>
 
-<div class="card">
-  <h3>3. Basket</h3>
+    <div id="permissionStatus" class="permission-status">
+      <div>Trading permissions not checked yet.</div>
+    </div>
 
-<div style="margin-bottom:16px;">
-  <label>Presets</label>
+  </div>
 
-  <button type="button" class="preset" data-preset="ai">
-    AI Leaders
-  </button>
+  <div class="permission-actions">
 
-  <button type="button" class="preset" data-preset="broad">
-    Broad Market
-  </button>
+    <button id="approveUSDG" disabled>
+      Enable USDG
+    </button>
 
-  <button type="button" class="preset" data-preset="beta">
-    High Beta
-  </button>
-</div>
+    <button id="renewPermit" disabled>
+      Enable Router
+    </button>
 
-  <div id="basketRows"></div>
+  </div>
 
-  <button id="addStock" disabled>
-    + Add Stock
-  </button>
-
-  <p>
-    Total allocation:
-    <span id="weightTotal" class="big-number">0%</span>
-  </p>
 </div>
 
 
-<div class="card">
-  <h3>4. Slippage</h3>
+<div class="card builder-card">
 
-  <label for="slippage">
-    Maximum slippage per stock
-  </label>
+  <div class="builder-header">
+    <div>
+      <h3>Build your basket</h3>
+      <p class="small">
+        Choose an amount, select your stocks, and set your allocation.
+      </p>
+    </div>
 
-  <select id="slippage">
-    <option value="25">0.25%</option>
-    <option value="50" selected>0.50%</option>
-    <option value="100">1.00%</option>
-  </select>
+    <div class="slippage-compact">
+      <label for="slippage">
+        Slippage
+      </label>
+
+      <select id="slippage">
+        <option value="25">0.25%</option>
+        <option value="50" selected>0.50%</option>
+        <option value="100">1.00%</option>
+      </select>
+    </div>
+  </div>
+
+
+  <div class="builder-section">
+
+    <label for="totalAmount">
+      Total investment
+    </label>
+
+    <div class="amount-input-wrap">
+
+      <input
+        id="totalAmount"
+        type="number"
+        min="0.01"
+        step="0.01"
+        value="3"
+      />
+
+      <span>
+        USDG
+      </span>
+
+    </div>
+
+    <p class="small">
+      Maximum amount StockStack will spend.
+    </p>
+
+  </div>
+
+
+  <div class="builder-section">
+
+    <div class="section-row">
+
+      <div>
+        <div class="section-label">
+          Presets
+        </div>
+
+        <div class="preset-row">
+
+          <button
+  type="button"
+  class="preset"
+  data-preset="ai"
+  disabled
+>
+            AI Leaders
+          </button>
+
+         <button
+  type="button"
+  class="preset"
+  data-preset="broad"
+  disabled
+>
+            Broad Market
+          </button>
+
+         <button
+  type="button"
+  class="preset"
+  data-preset="beta"
+  disabled
+>
+            High Beta
+          </button>
+
+        </div>
+      </div>
+
+      <div class="allocation-summary">
+        <span>Total allocation</span>
+        <strong
+          id="weightTotal"
+          class="big-number"
+        >
+          0%
+        </strong>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="builder-section">
+
+    <div id="basketRows"></div>
+
+    <button
+      id="addStock"
+      disabled
+    >
+      + Add Stock
+    </button>
+
+  </div>
+
 </div>
 
 
-<div class="card">
-  <h3>5. Quote + Simulation</h3>
+<div class="card trade-card">
 
-  <button id="simulate" disabled>
-    Build + Simulate Basket
-  </button>
+  <div class="trade-card-header">
 
-  <button id="send" disabled>
-    Send Basket
-  </button>
+    <div>
+      <h3>Basket Preview</h3>
 
-<div id="quoteSummary" style="margin:16px 0;"></div>
+      <p class="small">
+        Review your quote before submitting the transaction.
+      </p>
+    </div>
 
-<div id="quoteTimer" class="small"></div>
+    <div
+      id="quoteTimer"
+      class="quote-status"
+    ></div>
 
-  <pre id="output">Connect MetaMask to begin.</pre>
+  </div>
+
+<div
+  id="quoteEmpty"
+  class="quote-empty"
+>
+  <div class="quote-empty-icon">
+    ↗
+  </div>
+
+  <div class="quote-empty-title">
+    No quote yet
+  </div>
+
+  <div class="quote-empty-text">
+    Choose your basket and build a quote to preview the trade.
+  </div>
+</div>
+
+  <div
+    id="quoteSummary"
+    class="quote-summary"
+  ></div>
+
+
+  <div class="trade-actions">
+
+    <button
+      id="simulate"
+      class="secondary-action"
+      disabled
+    >
+      Build Quote
+    </button>
+
+    <button
+      id="send"
+      class="primary-action"
+      disabled
+    >
+      Buy Basket
+    </button>
+
+  </div>
+
+<div
+  id="txStatus"
+  class="tx-status"
+></div>
+
+
+  <details class="transaction-details">
+
+    <summary>
+      Advanced transaction details
+    </summary>
+
+    <pre id="output">
+Connect MetaMask to begin.
+    </pre>
+
+  </details>
+
 </div>
 
 
@@ -770,6 +1708,13 @@ const quoteSummary =
 const quoteTimer =
   document.getElementById("quoteTimer");
 
+const quoteEmpty =
+  document.getElementById("quoteEmpty");
+
+const txStatus =
+  document.getElementById("txStatus");
+
+
 
 /* =========================================================
    HELPERS
@@ -826,6 +1771,7 @@ function clearQuoteSummary() {
 
   quoteSummary.innerHTML = "";
   quoteTimer.textContent = "";
+quoteEmpty.style.display = "flex";
 
   if (quoteTimerInterval) {
     clearInterval(quoteTimerInterval);
@@ -861,10 +1807,10 @@ function startQuoteTimer(seconds = 45) {
         `Quote valid for ${remaining}s`;
 
 sendButton.textContent =
-  "Send Basket";
+  "Buy Basket";
 
 simulateButton.textContent =
-  "Build + Simulate Basket";
+  "Build Quote";
 
     } else {
 
@@ -1085,32 +2031,42 @@ function addBasketRow(
 
   row.className = "basket-row";
 
-  row.innerHTML = `
+row.innerHTML = `
 
-    <div style="
-      display:grid;
-      grid-template-columns: minmax(0, 1fr) 120px auto;
-      gap:12px;
-      align-items:end;
-      padding:12px;
-      margin-bottom:10px;
-      border:1px solid #ddd;
-      border-radius:10px;
-    ">
+  <div class="basket-asset-row">
 
-      <div>
-        <label>Stock</label>
+    <div class="asset-main">
 
-        <select
-          class="stock"
-          style="width:100%;"
-        >
-          ${poolOptions(symbol)}
-        </select>
+      <div class="asset-badge">
+        ${symbol || "?"}
       </div>
 
-      <div>
-        <label>Weight %</label>
+      <div class="asset-copy">
+
+        <div class="asset-select-wrap">
+
+          <select class="stock">
+            ${poolOptions(symbol)}
+          </select>
+
+        </div>
+
+        <div class="asset-subtitle">
+          Tokenized equity
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="asset-weight">
+
+      <label>
+        Weight
+      </label>
+
+      <div class="weight-input-wrap">
 
         <input
           class="weight"
@@ -1119,23 +2075,24 @@ function addBasketRow(
           max="100"
           step="1"
           value="${weight}"
-          style="width:100%;"
         />
+
+        <span>%</span>
+
       </div>
 
-      <button
-        class="remove"
-        type="button"
-        style="
-          padding:10px 14px;
-          white-space:nowrap;
-        "
-      >
-        Remove
-      </button>
-
     </div>
-  `;
+
+
+    <button
+      class="remove"
+      type="button"
+    >
+      Remove
+    </button>
+
+  </div>
+`;
 
   row
     .querySelector(".weight")
@@ -1207,13 +2164,15 @@ function invalidatePreparedTx() {
 
   preparedTransaction = null;
 
+txStatus.innerHTML = "";
+
   sendButton.disabled = true;
 
   sendButton.textContent =
-    "Send Basket";
+  "Buy Basket";
 
-  simulateButton.textContent =
-    "Build + Simulate Basket";
+simulateButton.textContent =
+  "Build Quote";
 
   clearQuoteSummary();
 
@@ -1429,6 +2388,14 @@ async function refreshPermissionStatus() {
         requiredAmount
       );
 
+const balanceText =
+  Number(
+    formatUnits(
+      status.balance,
+      6
+    )
+  ).toFixed(2);
+
     const usdgClass =
       status.erc20OK
         ? "status-good"
@@ -1470,11 +2437,15 @@ if (status.permitOK) {
 }
 
     permissionStatus.innerHTML = `
-      <div><b>Trading permissions</b></div>
+  <div><b>Trading permissions</b></div>
 
-      <div class="${usdgClass}">
-        USDG access: ${usdgText}
-      </div>
+  <div class="small" style="margin-top:4px; margin-bottom:6px;">
+    USDG balance: ${balanceText}
+  </div>
+
+  <div class="${usdgClass}">
+    USDG access: ${usdgText}
+  </div>
 
       <div class="${routerClass}">
         Router access: ${routerText}
@@ -1643,6 +2614,12 @@ simulateButton.disabled = false;
 addStockButton.disabled = false;
 approveUSDGButton.disabled = false;
 renewPermitButton.disabled = false;
+
+document
+  .querySelectorAll(".preset")
+  .forEach(button => {
+    button.disabled = false;
+  });
 
 await refreshPermissionStatus();
 
@@ -2572,83 +3549,57 @@ if (appFeeRaw > 0n) {
 
     log("");
 
+quoteEmpty.style.display = "none";
+
 quoteSummary.innerHTML = `
 
-  <div style="
-    border:1px solid #ccc;
-    border-radius:10px;
-    padding:14px;
-  ">
+  <div class="quote-overview">
 
-    <div style="
-      font-weight:bold;
-      margin-bottom:10px;
-      font-size:18px;
-    ">
-      Basket Preview
+    <div class="quote-overview-row quote-overview-total">
+      <span>Basket total</span>
+      <strong>${formatUnits(totalRaw, 6)} USDG</strong>
     </div>
 
-    <div style="
-      padding:10px 0;
-      margin-bottom:6px;
-    ">
-
-      <div style="
-        display:flex;
-        justify-content:space-between;
-      ">
-        <span>Total</span>
-        <b>${formatUnits(totalRaw, 6)} USDG</b>
-      </div>
-
-      <div style="
-        display:flex;
-        justify-content:space-between;
-      ">
-        <span>
-          App fee (${(Number(APP_FEE_BPS) / 100).toFixed(2)}%)
-        </span>
-        <span>${formatUnits(appFeeRaw, 6)} USDG</span>
-      </div>
-
-      <div style="
-        display:flex;
-        justify-content:space-between;
-      ">
-        <span>Invested</span>
-        <span>${formatUnits(investRaw, 6)} USDG</span>
-      </div>
-
+    <div class="quote-overview-row">
+      <span>
+        App fee (${(Number(APP_FEE_BPS) / 100).toFixed(2)}%)
+      </span>
+      <span>${formatUnits(appFeeRaw, 6)} USDG</span>
     </div>
+
+    <div class="quote-overview-row">
+      <span>Amount invested</span>
+      <span>${formatUnits(investRaw, 6)} USDG</span>
+    </div>
+
+  </div>
+
+  <div class="quote-assets">
 
     ${
       quoteCards
         .map(card => `
 
-          <div style="
-            padding:10px 0;
-            border-top:1px solid #eee;
-          ">
+          <div class="quote-asset">
 
-            <div style="
-              display:flex;
-              justify-content:space-between;
-              gap:20px;
-            ">
-              <b>${card.symbol}</b>
+            <div class="quote-asset-header">
+              <strong>${card.symbol}</strong>
               <span>${card.allocation} USDG</span>
             </div>
 
-            <div class="small">
-              Expected: ${card.expected} ${card.symbol}
+            <div class="quote-asset-row">
+              <span>Expected receive</span>
+              <span>${card.expected} ${card.symbol}</span>
             </div>
 
-            <div class="small">
-              Minimum: ${card.minimum} ${card.symbol}
+            <div class="quote-asset-row">
+              <span>Minimum receive</span>
+              <span>${card.minimum} ${card.symbol}</span>
             </div>
 
-            <div class="small">
-              Dynamic fee: ${card.fee}
+            <div class="quote-asset-row">
+              <span>Pool fee</span>
+              <span>${card.fee}</span>
             </div>
 
           </div>
@@ -2657,50 +3608,44 @@ quoteSummary.innerHTML = `
         .join("")
     }
 
-  </div>
+    </div>
 `;
-    log("✅ SIMULATION SUCCESSFUL");
 
+    log("✅ SIMULATION SUCCESSFUL");
 
     log(
       "Basket legs: " +
       basket.length
     );
 
-
     log(
       "Total USDG: " +
       totalUSDG
     );
-
 
     log(
       "Commands: " +
       commands
     );
 
-
     log(
       "Estimated gas: " +
       gasEstimate.toString()
     );
-
 
     log(
       "Router: " +
       UNIVERSAL_ROUTER
     );
 
-
     log("");
     log(
       "Nothing has been signed or sent."
     );
 
-
     sendButton.disabled = false;
 
-startQuoteTimer(45);
+    startQuoteTimer(45);
 
 
   } catch (error) {
@@ -2709,12 +3654,28 @@ startQuoteTimer(45);
 
     sendButton.disabled = true;
 
+    const message =
+      friendlyError(error);
+
     log("");
     log("❌ STOPPED");
-   log(
-  friendlyError(error)
-);
+    log(message);
+
+    quoteEmpty.style.display = "none";
+
+    quoteSummary.innerHTML = `
+      <div class="quote-error">
+        <div class="quote-error-title">
+          Unable to build quote
+        </div>
+
+        <div class="quote-error-text">
+          ${message}
+        </div>
+      </div>
+    `;
   }
+
 };
 
 
@@ -2772,6 +3733,12 @@ if (
 
     sendButton.disabled = true;
 
+txStatus.innerHTML = `
+  <div class="tx-status-box tx-status-pending">
+    Waiting for MetaMask confirmation...
+  </div>
+`;
+
 
     log("");
     log(
@@ -2792,6 +3759,21 @@ if (
           0n
       });
 
+txStatus.innerHTML = `
+  <div class="tx-status-box tx-status-submitted">
+    <div>Transaction submitted.</div>
+
+    <a
+      href="https://explorer.mainnet.chain.robinhood.com/tx/${tx.hash}"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="tx-link"
+    >
+      View transaction
+    </a>
+  </div>
+`;
+
 
     log("");
     log(
@@ -2801,6 +3783,12 @@ if (
     log(
       tx.hash
     );
+
+txStatus.innerHTML = `
+  <div class="tx-status-box tx-status-submitted">
+    Transaction submitted.
+  </div>
+`;
 
 
     log("");
@@ -2832,6 +3820,34 @@ if (
         receipt.gasUsed.toString()
       );
 
+txStatus.innerHTML = `
+  <div class="tx-status-box tx-status-success">
+    <div>Transaction confirmed successfully.</div>
+
+    <a
+      href="https://explorer.mainnet.chain.robinhood.com/tx/${tx.hash}"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="tx-link"
+    >
+      View transaction
+    </a>
+  </div>
+`;
+
+await refreshPermissionStatus();
+
+preparedTransaction = null;
+sendButton.disabled = true;
+
+if (quoteTimerInterval) {
+  clearInterval(quoteTimerInterval);
+  quoteTimerInterval = null;
+}
+
+quoteExpiresAt = 0;
+quoteTimer.textContent = "";
+
     } else {
 
       log("");
@@ -2851,6 +3867,12 @@ if (
    log(
   friendlyError(error)
 );
+
+txStatus.innerHTML = `
+  <div class="tx-status-box tx-status-error">
+    ${friendlyError(error)}
+  </div>
+`;
   }
 };
 
