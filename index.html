@@ -1114,6 +1114,14 @@ pre {
   color: var(--success);
 }
 
+.tx-received {
+  margin-top: 6px;
+
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .tx-status-error {
   border: 1px solid rgba(255, 111, 134, 0.35);
   background: rgba(255, 111, 134, 0.08);
@@ -1773,6 +1781,20 @@ function clearQuoteSummary() {
   quoteTimer.textContent = "";
 quoteEmpty.style.display = "flex";
 
+quoteEmpty.innerHTML = `
+  <div class="quote-empty-icon">
+    ↗
+  </div>
+
+  <div class="quote-empty-title">
+    No quote yet
+  </div>
+
+  <div class="quote-empty-text">
+    Choose your basket and build a quote to preview the trade.
+  </div>
+`;
+
   if (quoteTimerInterval) {
     clearInterval(quoteTimerInterval);
     quoteTimerInterval = null;
@@ -1826,6 +1848,24 @@ simulateButton.textContent =
   "Rebuild Quote";
 
 preparedTransaction = null;
+
+quoteSummary.innerHTML = "";
+
+quoteEmpty.style.display = "flex";
+
+quoteEmpty.innerHTML = `
+  <div class="quote-empty-icon">
+    ↻
+  </div>
+
+  <div class="quote-empty-title">
+    Quote expired
+  </div>
+
+  <div class="quote-empty-text">
+    Rebuild the quote to get current pricing before buying.
+  </div>
+`;
 
       clearInterval(quoteTimerInterval);
       quoteTimerInterval = null;
@@ -2348,6 +2388,46 @@ async function readWalletStatus(
       &&
       expiration > now
   };
+}
+
+async function readBasketTokenBalances(
+  basket
+) {
+
+  const balances = {};
+
+  for (const item of basket) {
+
+    const pool =
+      discoveredPools.find(
+        p =>
+          p.token.symbol ===
+          item.symbol
+      );
+
+    if (!pool) {
+      continue;
+    }
+
+    const token =
+      new Contract(
+        pool.token.address,
+        ERC20_ABI,
+        provider
+      );
+
+    const balance =
+      await token.balanceOf(
+        walletAddress
+      );
+
+    balances[item.symbol] = {
+      raw: balance,
+      decimals: pool.token.decimals
+    };
+  }
+
+  return balances;
 }
 
 /* =========================================================
@@ -3716,6 +3796,14 @@ if (
       preparedTransaction
     );
 
+const basket =
+  getBasketDefinition();
+
+const balancesBefore =
+  await readBasketTokenBalances(
+    basket
+  );
+
 
     const network =
       await provider.getNetwork();
@@ -3774,6 +3862,17 @@ txStatus.innerHTML = `
   </div>
 `;
 
+if (quoteTimerInterval) {
+  clearInterval(quoteTimerInterval);
+  quoteTimerInterval = null;
+}
+
+quoteExpiresAt = 0;
+quoteTimer.textContent = "";
+
+preparedTransaction = null;
+sendButton.disabled = true;
+
 
     log("");
     log(
@@ -3820,9 +3919,63 @@ txStatus.innerHTML = `
         receipt.gasUsed.toString()
       );
 
+
+
+const balancesAfter =
+  await readBasketTokenBalances(
+    basket
+  );
+
+const received =
+  basket.map(item => {
+
+    const before =
+      balancesBefore[item.symbol];
+
+    const after =
+      balancesAfter[item.symbol];
+
+    if (!before || !after) {
+      return null;
+    }
+
+    const delta =
+      after.raw - before.raw;
+
+    return {
+      symbol: item.symbol,
+      amount: formatUnits(
+        delta,
+        after.decimals
+      )
+    };
+  })
+  .filter(Boolean);
+
 txStatus.innerHTML = `
   <div class="tx-status-box tx-status-success">
-    <div>Transaction confirmed successfully.</div>
+
+    <div>
+      Transaction confirmed successfully.
+    </div>
+
+    ${
+      received.length
+        ? `
+          <div class="tx-received">
+            Received:
+            ${
+              received
+                .map(
+                  item =>
+                    `${item.amount} ${item.symbol}`
+                )
+                .join(" • ")
+            }
+          </div>
+        `
+        : ""
+    }
 
     <a
       href="https://explorer.mainnet.chain.robinhood.com/tx/${tx.hash}"
@@ -3832,6 +3985,7 @@ txStatus.innerHTML = `
     >
       View transaction
     </a>
+
   </div>
 `;
 
