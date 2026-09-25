@@ -537,6 +537,16 @@ pre {
   font-weight: 600;
 }
 
+.network-pill.wrong-network {
+  border-color: rgba(255, 111, 134, 0.45);
+  background: rgba(255, 111, 134, 0.08);
+  color: var(--danger);
+}
+
+.network-pill.wrong-network .status-dot {
+  background: var(--danger);
+}
+
 .status-dot {
   width: 8px;
   height: 8px;
@@ -629,6 +639,8 @@ pre {
   #approveUSDG[style*="display: none"]
 ):has(
   #renewPermit[style*="display: none"]
+):has(
+  #switchNetwork[style*="display: none"]
 ) {
   display: none;
 }
@@ -1262,10 +1274,15 @@ pre {
 
   <div class="topbar-actions">
 
-    <div class="network-pill">
-      <span class="status-dot"></span>
-      Robinhood Chain
-    </div>
+    <div
+  id="networkPill"
+  class="network-pill"
+>
+  <span class="status-dot"></span>
+  <span id="networkPillText">
+    Robinhood Chain
+  </span>
+</div>
 
     <button
       id="connect"
@@ -1308,6 +1325,14 @@ pre {
     <button id="renewPermit" disabled>
       Enable Router
     </button>
+
+<button
+  id="switchNetwork"
+  type="button"
+  style="display:none;"
+>
+  Switch to Robinhood Chain
+</button>
 
   </div>
 
@@ -1674,6 +1699,12 @@ let quoteTimerInterval = null;
 const connectButton =
   document.getElementById("connect");
 
+const networkPill =
+  document.getElementById("networkPill");
+
+const networkPillText =
+  document.getElementById("networkPillText");
+
 const simulateButton =
   document.getElementById("simulate");
 
@@ -1688,6 +1719,9 @@ const approveUSDGButton =
 
 const renewPermitButton =
   document.getElementById("renewPermit");
+
+const switchNetworkButton =
+  document.getElementById("switchNetwork");
 
 const walletInfo =
   document.getElementById("walletInfo");
@@ -1746,31 +1780,80 @@ function friendlyError(error) {
     ||
     String(error);
 
+  const lower =
+    message.toLowerCase();
+
+
   if (
-    message.includes("user rejected")
+    lower.includes("user rejected")
     ||
     message.includes("ACTION_REJECTED")
   ) {
     return "Transaction cancelled in MetaMask.";
   }
 
+
   if (
-    message.toLowerCase().includes("insufficient funds")
+    lower.includes("insufficient funds")
   ) {
     return "Not enough balance to complete this transaction.";
   }
 
+
   if (
-    message.toLowerCase().includes("allowance")
+    lower.includes("allowance")
   ) {
     return "Wallet permission is too low or has expired.";
   }
 
+
   if (
-    message.toLowerCase().includes("expired")
+    lower.includes("expired")
   ) {
     return "The quote or wallet permission has expired. Please try again.";
   }
+
+
+  if (
+    lower.includes("no pool found")
+  ) {
+    return "A trading pool could not be found for one of the selected stocks.";
+  }
+
+
+  if (
+    lower.includes("execution reverted")
+    ||
+    lower.includes("call exception")
+  ) {
+    return "The trade simulation failed onchain. Rebuild the quote and try again.";
+  }
+
+
+  if (
+    lower.includes("network changed")
+    ||
+    lower.includes("wrong network")
+    ||
+    lower.includes("chain")
+    && lower.includes("network")
+  ) {
+    return "Wallet network changed. Switch back to Robinhood Chain and try again.";
+  }
+
+
+  if (
+    lower.includes("failed to fetch")
+    ||
+    lower.includes("network error")
+    ||
+    lower.includes("timeout")
+    ||
+    lower.includes("rpc")
+  ) {
+    return "Robinhood Chain is not responding right now. Please try again.";
+  }
+
 
   return message;
 }
@@ -2616,18 +2699,45 @@ async () => {
       await signer.getAddress();
 
 
-    const network =
-      await provider.getNetwork();
+    const chainIdHex =
+  await window.ethereum.request({
+    method: "eth_chainId"
+  });
+
+const currentChainId =
+  BigInt(chainIdHex);
 
 
-    if (
-      network.chainId !== CHAIN_ID
-    ) {
+if (
+  currentChainId !== CHAIN_ID
+) {
 
-      throw new Error(
-        "MetaMask must be on Robinhood Chain (4663)."
-      );
-    }
+  networkPill.classList.add(
+    "wrong-network"
+  );
+
+  networkPillText.textContent =
+    "Wrong Network";
+
+  permissionStatus.innerHTML = `
+    <div class="status-bad">
+      Wrong network.
+    </div>
+  `;
+
+  approveUSDGButton.style.display =
+    "none";
+
+  renewPermitButton.style.display =
+    "none";
+
+  switchNetworkButton.style.display =
+    "inline-block";
+
+  throw new Error(
+    "MetaMask must be on Robinhood Chain (4663)."
+  );
+}
 
 
     walletInfo.innerHTML = `
@@ -2641,9 +2751,9 @@ async () => {
       </div>
 
       <div>
-        Chain ID:
-        ${network.chainId}
-      </div>
+  Chain ID:
+  ${currentChainId}
+</div>
     `;
 
 
@@ -3737,6 +3847,11 @@ quoteSummary.innerHTML = `
     const message =
       friendlyError(error);
 
+const displayMessage =
+  message.length > 180
+    ? "Something went wrong while building the quote. Please try again."
+    : message;
+
     log("");
     log("❌ STOPPED");
     log(message);
@@ -3750,7 +3865,7 @@ quoteSummary.innerHTML = `
         </div>
 
         <div class="quote-error-text">
-          ${message}
+          ${displayMessage}
         </div>
       </div>
     `;
@@ -3803,7 +3918,6 @@ const balancesBefore =
   await readBasketTokenBalances(
     basket
   );
-
 
     const network =
       await provider.getNetwork();
@@ -3925,6 +4039,7 @@ const balancesAfter =
   await readBasketTokenBalances(
     basket
   );
+
 
 const received =
   basket.map(item => {
@@ -4054,6 +4169,102 @@ document
     );
 
   });
+
+switchNetworkButton.onclick =
+async () => {
+
+  try {
+
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [
+        {
+          chainId: "0x1237"
+        }
+      ]
+    });
+
+  } catch (error) {
+
+    txStatus.innerHTML = `
+      <div class="tx-status-box tx-status-error">
+        Could not switch networks.
+      </div>
+    `;
+  }
+};
+
+if (window.ethereum) {
+
+  window.ethereum.on(
+    "chainChanged",
+    async (chainIdHex) => {
+
+          invalidatePreparedTx();
+
+      txStatus.innerHTML = "";
+
+      const newChainId =
+  BigInt(chainIdHex);
+
+if (
+  newChainId !== CHAIN_ID
+) {
+
+networkPill.classList.add("wrong-network");
+
+networkPillText.textContent =
+  "Wrong Network";
+
+        walletInfo.innerHTML = `
+          <span class="status-bad">
+            Network changed. Switch back to Robinhood Chain.
+          </span>
+        `;
+
+        permissionStatus.innerHTML = `
+          <div class="status-bad">
+            Wrong network.
+          </div>
+        `;
+
+        approveUSDGButton.style.display =
+          "none";
+
+        renewPermitButton.style.display =
+          "none";
+
+switchNetworkButton.style.display =
+  "inline-block";
+
+        return;
+      }
+
+      walletInfo.innerHTML = `
+        <span class="status-good">
+          Connected
+        </span>
+        <div class="small">
+          ${walletAddress}
+        </div>
+        <div class="small">
+          Chain ID: ${CHAIN_ID}
+        </div>
+      `;
+
+networkPill.classList.remove("wrong-network");
+
+networkPillText.textContent =
+  "Robinhood Chain";
+
+switchNetworkButton.style.display =
+  "none";
+
+      await refreshPermissionStatus();
+    }
+  );
+
+}
 
 /* =========================================================
    INVALIDATE OLD QUOTES WHEN USER EDITS
