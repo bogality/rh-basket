@@ -1247,6 +1247,140 @@ pre {
   text-align: right;
 }
 
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .topbar {
+    padding: 16px 14px 8px;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .brand-tagline {
+    display: none;
+  }
+
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .topbar-actions {
+    gap: 8px;
+  }
+
+  .network-pill {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .wallet-button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  main,
+  .container {
+    padding: 18px 12px 48px;
+  }
+
+  .card,
+  .builder-card,
+  .trade-card,
+  .wallet-panel {
+    border-radius: 14px;
+  }
+
+  .wallet-status-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .permission-status {
+    text-align: left;
+  }
+
+  .permission-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .permission-actions button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .builder-card {
+    padding: 18px;
+  }
+
+  .basket-asset-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .asset-main {
+    width: 100%;
+  }
+
+  .asset-weight {
+    width: 100%;
+  }
+
+  .weight-input-wrap {
+    width: 100%;
+  }
+
+  .remove {
+    width: 100%;
+  }
+
+  .trade-card {
+    padding: 18px;
+  }
+
+  .trade-card-header {
+    gap: 10px;
+  }
+
+  .quote-status {
+    font-size: 11px;
+  }
+
+  .trade-actions {
+    flex-direction: column;
+  }
+
+  .trade-actions button,
+  .secondary-action,
+  .primary-action {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .quote-overview-row,
+  .quote-asset-header,
+  .quote-asset-row {
+    gap: 12px;
+  }
+
+  .quote-asset-row span:last-child {
+    overflow-wrap: anywhere;
+  }
+
+  .tx-received {
+    overflow-wrap: anywhere;
+  }
+}
+
 </style>
 
  
