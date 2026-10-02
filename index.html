@@ -1997,9 +1997,31 @@ async function discoverPools() {
       provider
     );
 
-  const pools =
-    await registry.activePools();
+  let pools;
 
+for (let attempt = 1; attempt <= 3; attempt++) {
+
+  try {
+
+    pools =
+      await registry.activePools();
+
+    break;
+
+  } catch (error) {
+
+    if (attempt === 3) {
+      throw new Error(
+        "Could not load trading pools. Please try again."
+      );
+    }
+
+    await new Promise(
+      resolve =>
+        setTimeout(resolve, 750)
+    );
+  }
+}
   const found = [];
 
   for (const pool of pools) {
@@ -2042,7 +2064,18 @@ async function discoverPools() {
         token: info
       });
 
-    } catch {}
+        } catch (error) {
+
+      log(
+        `Skipped token ${stockAddress}: ${
+          error.shortMessage
+          ||
+          error.message
+          ||
+          "Could not read token metadata."
+        }`
+      );
+    }
   }
 
   found.sort(
@@ -3081,6 +3114,8 @@ async () => {
     );
 
     invalidatePreparedTx();
+
+await refreshPermissionStatus();
 
   } catch (error) {
 
@@ -4261,6 +4296,79 @@ switchNetworkButton.style.display =
   "none";
 
       await refreshPermissionStatus();
+    }
+  );
+
+}
+
+if (window.ethereum) {
+
+  window.ethereum.on(
+    "accountsChanged",
+    async (accounts) => {
+
+      invalidatePreparedTx();
+
+      txStatus.innerHTML = "";
+
+      if (
+        !accounts
+        ||
+        accounts.length === 0
+      ) {
+
+        walletAddress = null;
+        signer = null;
+
+        walletInfo.innerHTML = `
+          <span class="status-bad">
+            Wallet disconnected.
+          </span>
+        `;
+
+        permissionStatus.innerHTML = `
+          <div>
+            Connect MetaMask first.
+          </div>
+        `;
+
+        simulateButton.disabled = true;
+        addStockButton.disabled = true;
+
+        approveUSDGButton.style.display =
+          "none";
+
+        renewPermitButton.style.display =
+          "none";
+
+        switchNetworkButton.style.display =
+          "none";
+
+        return;
+      }
+
+      walletAddress =
+        accounts[0];
+
+      signer =
+        await provider.getSigner();
+
+      walletInfo.innerHTML = `
+        <span class="status-good">
+          Connected
+        </span>
+
+        <div class="small">
+          ${walletAddress}
+        </div>
+
+        <div class="small">
+          Chain ID: ${CHAIN_ID}
+        </div>
+      `;
+
+      await refreshPermissionStatus();
+
     }
   );
 
