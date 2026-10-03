@@ -1672,9 +1672,9 @@ pre {
       Advanced transaction details
     </summary>
 
-    <pre id="output">
-Connect MetaMask to begin.
-    </pre>
+<pre id="output">
+Connect a wallet to begin.
+</pre>
 
   </details>
 
@@ -1682,6 +1682,8 @@ Connect MetaMask to begin.
 
 
 <script type="module">
+
+
 
 import {
   BrowserProvider,
@@ -1693,6 +1695,98 @@ import {
   hexlify
 } from "ethers";
 
+import {
+  createAppKit
+} from "@reown/appkit";
+
+import {
+  EthersAdapter
+} from "@reown/appkit-adapter-ethers";
+
+import {
+  defineChain
+} from "@reown/appkit/networks";
+
+const PROJECT_ID =
+  "09ba118428aa82add3613eb650642d37";
+
+const robinhoodChain =
+  defineChain({
+    id: 4663,
+    caipNetworkId: "eip155:4663",
+    chainNamespace: "eip155",
+
+    name: "Robinhood Chain",
+
+    nativeCurrency: {
+      name: "Ether",
+      symbol: "ETH",
+      decimals: 18
+    },
+
+    rpcUrls: {
+      default: {
+        http: [
+          "https://rpc.mainnet.chain.robinhood.com"
+        ]
+      }
+    },
+
+    blockExplorers: {
+      default: {
+        name: "Robinhood Chain Explorer",
+        url: "https://explorer.mainnet.chain.robinhood.com"
+      }
+    }
+  });
+
+const appKit =
+  createAppKit({
+    adapters: [
+      new EthersAdapter()
+    ],
+
+    networks: [
+      robinhoodChain
+    ],
+
+    defaultNetwork:
+      robinhoodChain,
+
+    projectId:
+      PROJECT_ID,
+
+    metadata: {
+      name: "StockStack",
+      description:
+        "Build tokenized stock baskets in one transaction.",
+      url:
+        "https://www.stockstack.net",
+      icons: []
+    },
+
+    themeMode:
+      "dark",
+
+    features: {
+      analytics: true
+    }
+  });
+
+
+let appKitWalletProvider = null;
+let appKitAccount = null;
+
+appKit.subscribeProviders(state => {
+
+  appKitWalletProvider =
+    state["eip155"] || null;
+});
+
+appKit.subscribeAccount(state => {
+
+  appKitAccount = state;
+});
 
 /* =========================================================
    ROBINHOOD CHAIN
@@ -1923,7 +2017,7 @@ function friendlyError(error) {
     ||
     message.includes("ACTION_REJECTED")
   ) {
-    return "Transaction cancelled in MetaMask.";
+    return "Transaction cancelled in wallet.";
   }
 
 
@@ -2690,7 +2784,7 @@ async function refreshPermissionStatus() {
 
     if (!walletAddress) {
       permissionStatus.innerHTML =
-        "<div>Connect MetaMask first.</div>";
+        "<div>Connect wallet first.</div>";
       return;
     }
 
@@ -2821,44 +2915,38 @@ if (status.permitOK) {
 
   } catch (error) {
 
-    permissionStatus.innerHTML =
-      `<div class="status-bad">
-        Could not read permissions.
-      </div>`;
-  }
+  permissionStatus.innerHTML =
+    `<div class="status-bad">
+      Could not read permissions.
+    </div>`;
+}
 }
 
 
 /* =========================================================
-   CONNECT METAMASK
+   CONNECT WALLET
    ========================================================= */
 
 connectButton.onclick =
 async () => {
 
-  try {
+  await appKit.open({
+    view: "Connect"
+  });
 
-    if (!window.ethereum) {
+  if (!appKitWalletProvider) {
+    return;
+  }
 
-      throw new Error(
-        "MetaMask was not detected."
-      );
-    }
+ try {
 
-
-    provider =
-      new BrowserProvider(
-        window.ethereum
-      );
-
-
-    await provider.send(
-      "eth_requestAccounts",
-      []
+  provider =
+    new BrowserProvider(
+      appKitWalletProvider
     );
 
 
-    signer =
+       signer =
       await provider.getSigner();
 
 
@@ -2902,7 +2990,7 @@ if (
     "inline-block";
 
   throw new Error(
-    "MetaMask must be on Robinhood Chain (4663)."
+    "Your wallet must be on Robinhood Chain (4663)."
   );
 }
 
@@ -3027,7 +3115,7 @@ async () => {
 
     if (!signer || !walletAddress) {
       throw new Error(
-        "Connect MetaMask first."
+        "Connect a wallet first."
       );
     }
 
@@ -3071,7 +3159,7 @@ async () => {
       " USDG"
     );
     log("");
-    log("Opening MetaMask...");
+    log("Opening wallet...");
 
     const tx =
       await usdgWrite.approve(
@@ -3140,7 +3228,7 @@ async () => {
 
     if (!signer || !walletAddress) {
       throw new Error(
-        "Connect MetaMask first."
+        "Connect a wallet first."
       );
     }
 
@@ -3204,7 +3292,7 @@ async () => {
     );
     log("");
     log(
-      "Opening MetaMask..."
+      "Opening a wallet..."
     );
 
     const tx =
@@ -4073,7 +4161,7 @@ if (
 
     /*
       Re-simulate immediately
-      before asking MetaMask to sign.
+      before asking the wallet to sign.
     */
 
     await provider.call(
@@ -4106,14 +4194,14 @@ const balancesBefore =
 
 txStatus.innerHTML = `
   <div class="tx-status-box tx-status-pending">
-    Waiting for MetaMask confirmation...
+    Waiting for wallet confirmation...
   </div>
 `;
 
 
     log("");
     log(
-      "Opening MetaMask..."
+      "Opening wallet..."
     );
 
 
@@ -4462,7 +4550,7 @@ if (window.ethereum) {
 
         permissionStatus.innerHTML = `
           <div>
-            Connect MetaMask first.
+            Connect a wallet first.
           </div>
         `;
 
