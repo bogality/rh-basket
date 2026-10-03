@@ -1450,25 +1450,43 @@ pre {
 
   </div>
 
-  <div class="permission-actions">
+ <div class="permission-actions">
 
-    <button id="approveUSDG" disabled>
-      Enable USDG
-    </button>
+  <button
+    id="approveTrading"
+    type="button"
+    disabled
+  >
+    Approve Trading
+  </button>
 
-    <button id="renewPermit" disabled>
-      Enable Router
-    </button>
+  <button
+    id="approveUSDG"
+    type="button"
+    disabled
+    style="display:none;"
+  >
+    Enable USDG
+  </button>
 
-<button
-  id="switchNetwork"
-  type="button"
-  style="display:none;"
->
-  Switch to Robinhood Chain
-</button>
+  <button
+    id="renewPermit"
+    type="button"
+    disabled
+    style="display:none;"
+  >
+    Enable Router
+  </button>
 
-  </div>
+  <button
+    id="switchNetwork"
+    type="button"
+    style="display:none;"
+  >
+    Switch to Robinhood Chain
+  </button>
+
+</div>
 
 </div>
 
@@ -1941,6 +1959,9 @@ const sendButton =
 
 const addStockButton =
   document.getElementById("addStock");
+
+const approveTradingButton =
+  document.getElementById("approveTrading");
 
 const approveUSDGButton =
   document.getElementById("approveUSDG");
@@ -2820,98 +2841,46 @@ const balanceText =
     )
   ).toFixed(2);
 
-    const usdgClass =
-      status.erc20OK
-        ? "status-good"
-        : "status-bad";
+   const tradingReady =
+  status.erc20OK
+  &&
+  status.permitOK;
 
-    const routerClass =
-      status.permitOK
-        ? "status-good"
-        : "status-bad";
-
-    const usdgText =
-      status.erc20OK
-        ? "✓ Enabled"
-        : "✕ Needs approval";
-let routerText;
-
-const now =
-  Math.floor(Date.now() / 1000);
-
-if (status.permitOK) {
-
-  routerText = "✓ Enabled";
-
-} else if (
-  status.permitExpiration === 0
-) {
-
-  routerText = "✕ Not enabled";
-
-} else if (
-  status.permitExpiration <= now
-) {
-
-  routerText = "✕ Expired";
-
-} else {
-
-  routerText = "✕ Allowance too low";
-}
-
-    permissionStatus.innerHTML = `
-  <div><b>Trading permissions</b></div>
+permissionStatus.innerHTML = `
+  <div>
+    <b>Trading access</b>
+  </div>
 
   <div class="small" style="margin-top:4px; margin-bottom:6px;">
     USDG balance: ${balanceText}
   </div>
 
-  <div class="${usdgClass}">
-    USDG access: ${usdgText}
+  <div class="${
+    tradingReady
+      ? "status-good"
+      : "status-bad"
+  }">
+    ${
+      tradingReady
+        ? "✓ Ready"
+        : "✕ Approval required"
+    }
   </div>
-
-      <div class="${routerClass}">
-        Router access: ${routerText}
-      </div>
-
-      <div class="small" style="margin-top:6px;">
-        USDG → Permit2 allowance:
-        ${formatUnits(
-          status.erc20Allowance,
-          6
-        )} USDG
-      </div>
-
-      <div class="small">
-  Permit2 → Router allowance:
-  ${formatUnits(
-    status.permitAmount,
-    6
-  )} USDG
-</div>
-
-<div class="small">
-  Router permission expires:
-  ${
-    status.permitExpiration === 0
-      ? "Not set"
-      : new Date(
-          status.permitExpiration * 1000
-        ).toLocaleString()
-  }
-</div>
-    `;
+`;
 
     approveUSDGButton.style.display =
-      status.erc20OK
-        ? "none"
-        : "inline-block";
+  "none";
 
-    renewPermitButton.style.display =
-      status.permitOK
-        ? "none"
-        : "inline-block";
+renewPermitButton.style.display =
+  "none";
+
+approveTradingButton.style.display =
+  tradingReady
+    ? "none"
+    : "inline-block";
+
+approveTradingButton.disabled =
+  tradingReady;
 
   } catch (error) {
 
@@ -3102,6 +3071,135 @@ addStockButton.onclick =
       .token.symbol,
     0
   );
+};
+
+/* =========================================================
+   APPROVE TRADING
+   ========================================================= */
+
+approveTradingButton.onclick =
+async () => {
+
+  try {
+
+    if (!signer || !walletAddress) {
+      throw new Error(
+        "Connect a wallet first."
+      );
+    }
+
+    const totalUSDG =
+      Number(totalAmountInput.value);
+
+    if (
+      !Number.isFinite(totalUSDG)
+      ||
+      totalUSDG <= 0
+    ) {
+      throw new Error(
+        "Enter a valid USDG amount first."
+      );
+    }
+
+    const requiredAmount =
+      parseUnits(
+        totalUSDG.toFixed(6),
+        6
+      );
+
+    approveTradingButton.disabled = true;
+
+    let status =
+      await readWalletStatus(
+        requiredAmount
+      );
+
+
+    /*
+      Step 1:
+      Approve USDG → Permit2 if needed.
+    */
+
+    if (!status.erc20OK) {
+
+      await approveUSDGButton.onclick();
+
+      status =
+        await readWalletStatus(
+          requiredAmount
+        );
+
+      /*
+        If the user cancelled or the
+        approval failed, stop here.
+      */
+
+      if (!status.erc20OK) {
+        return;
+      }
+    }
+
+
+    /*
+      Step 2:
+      Approve Permit2 → Router if needed.
+    */
+
+    if (!status.permitOK) {
+
+      await renewPermitButton.onclick();
+
+      status =
+        await readWalletStatus(
+          requiredAmount
+        );
+    }
+
+
+    await refreshPermissionStatus();
+
+  } catch (error) {
+
+    log("");
+    log(
+      friendlyError(error)
+    );
+
+  } finally {
+
+    const totalUSDG =
+      Number(totalAmountInput.value);
+
+    if (
+      Number.isFinite(totalUSDG)
+      &&
+      totalUSDG > 0
+      &&
+      walletAddress
+    ) {
+
+      const requiredAmount =
+        parseUnits(
+          totalUSDG.toFixed(6),
+          6
+        );
+
+      const status =
+        await readWalletStatus(
+          requiredAmount
+        );
+
+      approveTradingButton.disabled =
+        status.erc20OK
+        &&
+        status.permitOK;
+
+    } else {
+
+      approveTradingButton.disabled =
+        true;
+    }
+  }
 };
 
 /* =========================================================
@@ -3427,10 +3525,46 @@ log(
        WALLET CHECKS
        =========================== */
 
-    const wallet =
-      await readWalletStatus(
-        totalRaw
-      );
+    let wallet =
+  await readWalletStatus(
+    totalRaw
+  );
+
+
+/*
+  If trading approval is missing,
+  request it before building the quote.
+*/
+
+if (
+  !wallet.erc20OK
+  ||
+  !wallet.permitOK
+) {
+
+  if (!wallet.balanceOK) {
+    throw new Error(
+      "Not enough USDG."
+    );
+  }
+
+  await approveTradingButton.onclick();
+
+  wallet =
+    await readWalletStatus(
+      totalRaw
+    );
+
+  if (
+    !wallet.erc20OK
+    ||
+    !wallet.permitOK
+  ) {
+    throw new Error(
+      "Trading approval is required to build this basket."
+    );
+  }
+}
 
 
     log("WALLET CHECK");
