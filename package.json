@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test test-ink-engine.mjs",
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "ink:quote": "node quote-ink-basket.mjs",
+    "ink:inspect": "node inspect-ink-markets.js"
   },
   "keywords": [],
   "author": "",

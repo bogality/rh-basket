@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Robinhood Chain Basket Builder</title>
+  <title>StockStack — Ink Basket Builder</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
   <style>
@@ -1414,7 +1414,7 @@ pre {
 >
   <span class="status-dot"></span>
   <span id="networkPillText">
-    Robinhood Chain
+    Ink
   </span>
 </div>
 
@@ -1483,7 +1483,7 @@ pre {
     type="button"
     style="display:none;"
   >
-    Switch to Robinhood Chain
+    Switch to Ink
   </button>
 
 </div>
@@ -1498,6 +1498,7 @@ pre {
       <h3>Build your basket</h3>
       <p class="small">
         Choose an amount, select your stocks, and set your allocation.
+        You receive wrapped xStocks; quoted amounts are wrapper token units.
       </p>
     </div>
 
@@ -1706,12 +1707,11 @@ Connect a wallet to begin.
 import {
   BrowserProvider,
   Contract,
-  Interface,
-  AbiCoder,
   parseUnits,
-  formatUnits,
-  hexlify
+  formatUnits
 } from "ethers";
+
+import { INK, discoverInkMarkets, quoteInkBuy, allocateBasket, encodeInkBasket } from "./ink-engine.mjs";
 
 import {
   createAppKit
@@ -1728,13 +1728,13 @@ import {
 const PROJECT_ID =
   "09ba118428aa82add3613eb650642d37";
 
-const robinhoodChain =
+const inkChain =
   defineChain({
-    id: 4663,
-    caipNetworkId: "eip155:4663",
+    id: 57073,
+    caipNetworkId: "eip155:57073",
     chainNamespace: "eip155",
 
-    name: "Robinhood Chain",
+    name: "Ink",
 
     nativeCurrency: {
       name: "Ether",
@@ -1745,15 +1745,15 @@ const robinhoodChain =
     rpcUrls: {
       default: {
         http: [
-          "https://rpc.mainnet.chain.robinhood.com"
+          "https://rpc-gel.inkonchain.com"
         ]
       }
     },
 
     blockExplorers: {
       default: {
-        name: "Robinhood Chain Explorer",
-        url: "https://explorer.mainnet.chain.robinhood.com"
+        name: "Ink Explorer",
+        url: "https://explorer.inkonchain.com"
       }
     }
   });
@@ -1765,11 +1765,11 @@ const appKit =
     ],
 
     networks: [
-      robinhoodChain
+      inkChain
     ],
 
     defaultNetwork:
-      robinhoodChain,
+      inkChain,
 
     projectId:
       PROJECT_ID,
@@ -1810,22 +1810,15 @@ appKit.subscribeAccount(state => {
    ROBINHOOD CHAIN
    ========================================================= */
 
-const CHAIN_ID = 4663n;
+const CHAIN_ID = 57073n;
 
-const REGISTRY =
-  "0x159a113e012593d9b3cc63ad45e30f0467e13ef3";
-
-const QUOTER =
-  "0x8dc178efb8111bb0973dd9d722ebeff267c98f94";
-
-const UNIVERSAL_ROUTER =
-  "0x8876789976decbfcbbbe364623c63652db8c0904";
+const UNIVERSAL_ROUTER = INK.router;
 
 const PERMIT2 =
   "0x000000000022D473030F116dDEE9F6B43aC78BA3";
 
 const USDG =
-  "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
+  INK.usdg;
 
 const APP_FEE_RECIPIENT =
   "0xbc9ca263a8a6872ddF808478ae9e0be14832e5b7";
@@ -1836,24 +1829,6 @@ const APP_FEE_BPS = 10n;
 /* =========================================================
    ABIs
    ========================================================= */
-
-const REGISTRY_ABI = [
-  `function activePools()
-    view
-    returns (
-      tuple(
-        tuple(
-          address currency0,
-          address currency1,
-          uint24 fee,
-          int24 tickSpacing,
-          address hooks
-        ) key,
-        bytes32 id,
-        bool active
-      )[]
-    )`
-];
 
 const ERC20_ABI = [
   "function symbol() view returns (string)",
@@ -1876,52 +1851,6 @@ const PERMIT2_ABI = [
   )`
 ];
 
-const QUOTER_ABI = [
-  `function quoteExactInputSingle(
-    tuple(
-      tuple(
-        address currency0,
-        address currency1,
-        uint24 fee,
-        int24 tickSpacing,
-        address hooks
-      ) poolKey,
-      bool zeroForOne,
-      uint128 exactAmount,
-      bytes hookData
-    ) params
-  )
-  returns (
-    uint256 amountOut,
-    uint256 gasEstimate
-  )`
-];
-
-const HOOK_ABI = [
-  "function currentFee(bytes32 poolId,bool zeroForOne) view returns (uint24)"
-];
-
-const ROUTER_ABI = [
-  "function execute(bytes commands,bytes[] inputs,uint256 deadline) payable"
-];
-
-
-/* =========================================================
-   UNISWAP V4 ACTIONS
-   ========================================================= */
-
-const V4_SWAP = 0x10;
-const PERMIT2_TRANSFER_FROM = 0x02;
-
-const SWAP_EXACT_IN_SINGLE = 0x06;
-const SETTLE_ALL = 0x0c;
-const TAKE_ALL = 0x0f;
-
-const BPS = 10000n;
-
-const abi = AbiCoder.defaultAbiCoder();
-
-
 /* =========================================================
    STATE
    ========================================================= */
@@ -1933,6 +1862,7 @@ let walletAddress;
 let discoveredPools = [];
 
 let preparedTransaction = null;
+let basketRevision = 0;
 
 let quoteExpiresAt = 0;
 let quoteTimerInterval = null;
@@ -2087,7 +2017,7 @@ function friendlyError(error) {
     lower.includes("chain")
     && lower.includes("network")
   ) {
-    return "Wallet network changed. Switch back to Robinhood Chain and try again.";
+    return "Wallet network changed. Switch back to Ink and try again.";
   }
 
 
@@ -2100,7 +2030,7 @@ function friendlyError(error) {
     ||
     lower.includes("rpc")
   ) {
-    return "Robinhood Chain is not responding right now. Please try again.";
+    return "Ink is not responding right now. Please try again.";
   }
 
 
@@ -2234,107 +2164,11 @@ async function tokenInfo(address) {
 
 
 /* =========================================================
-   DISCOVER FABLES USDG POOLS
+   DISCOVER QUOTRONS INK MARKETS
    ========================================================= */
 
 async function discoverPools() {
-
-  const registry =
-    new Contract(
-      REGISTRY,
-      REGISTRY_ABI,
-      provider
-    );
-
-  let pools;
-
-for (let attempt = 1; attempt <= 3; attempt++) {
-
-  try {
-
-    pools =
-      await registry.activePools();
-
-    break;
-
-  } catch (error) {
-
-    if (attempt === 3) {
-      throw new Error(
-        "Could not load trading pools. Please try again."
-      );
-    }
-
-    await new Promise(
-      resolve =>
-        setTimeout(resolve, 750)
-    );
-  }
-}
-  const found = [];
-
-  for (const pool of pools) {
-
-    const key = pool.key;
-
-    const c0 =
-      key.currency0.toLowerCase();
-
-    const c1 =
-      key.currency1.toLowerCase();
-
-    const usdg =
-      USDG.toLowerCase();
-
-    if (
-      c0 !== usdg &&
-      c1 !== usdg
-    ) {
-      continue;
-    }
-
-    const stockAddress =
-      c0 === usdg
-        ? key.currency1
-        : key.currency0;
-
-    try {
-
-      const info =
-        await tokenInfo(stockAddress);
-
-      if (info.symbol === "USDG") {
-        continue;
-      }
-
-      found.push({
-        id: pool.id,
-        key,
-        token: info
-      });
-
-        } catch (error) {
-
-      log(
-        `Skipped token ${stockAddress}: ${
-          error.shortMessage
-          ||
-          error.message
-          ||
-          "Could not read token metadata."
-        }`
-      );
-    }
-  }
-
-  found.sort(
-    (a, b) =>
-      a.token.symbol.localeCompare(
-        b.token.symbol
-      )
-  );
-
-  discoveredPools = found;
+  discoveredPools = await discoverInkMarkets(provider);
 }
 
 
@@ -2346,19 +2180,19 @@ const PRESETS = {
 
   ai: [
     { symbol: "NVDA", weight: 40 },
-    { symbol: "META", weight: 30 },
+    { symbol: "GOOGL", weight: 30 },
     { symbol: "AAPL", weight: 30 }
   ],
 
   broad: [
     { symbol: "SPY", weight: 70 },
-    { symbol: "GLD", weight: 30 }
+    { symbol: "MCD", weight: 30 }
   ],
 
   beta: [
     { symbol: "TSLA", weight: 40 },
     { symbol: "NVDA", weight: 35 },
-    { symbol: "AMC", weight: 25 }
+    { symbol: "MSTR", weight: 25 }
   ]
 
 };
@@ -2566,6 +2400,7 @@ function updateWeightTotal() {
 
 
 function invalidatePreparedTx() {
+  basketRevision++;
 
   preparedTransaction = null;
 
@@ -2959,7 +2794,7 @@ if (
     "inline-block";
 
   throw new Error(
-    "Your wallet must be on Robinhood Chain (4663)."
+    "Your wallet must be on Ink (57073)."
   );
 }
 
@@ -2983,7 +2818,7 @@ if (
 
     clearOutput();
 
-    log("Discovering active Fables stock pools...");
+    log("Discovering Quotrons xStocks markets on Ink...");
 
 
     await discoverPools();
@@ -3462,6 +3297,8 @@ async () => {
   try {
 
     invalidatePreparedTx();
+    const buildRevision = basketRevision;
+    const buildAccount = walletAddress;
 
     clearOutput();
 
@@ -3499,11 +3336,8 @@ if (totalUSDG < 0.01) {
         6
       );
 
-const appFeeRaw =
-  totalRaw * APP_FEE_BPS / 10000n;
-
-const investRaw =
-  totalRaw - appFeeRaw;
+const { feeRaw: appFeeRaw, investedRaw: investRaw, allocations } =
+  allocateBasket(totalRaw, basket, APP_FEE_BPS);
 
 log(
   `App fee: ${formatUnits(appFeeRaw, 6)} USDG`
@@ -3629,483 +3463,29 @@ if (
        QUOTES
        =========================== */
 
-    const quoter =
-      new Contract(
-        QUOTER,
-        QUOTER_ABI,
-        provider
-      );
-
-
-    const slippageBps =
-      BigInt(
-        slippageSelect.value
-      );
-
-
-    let commands = "0x";
-    const inputs = [];
-
-
-    log("");
-    log("LIVE V4 QUOTES");
-    log("============================");
-
-const quoteCards = [];
-
-let allocatedSoFar = 0n;
-
-    for (
-      let i = 0;
-      i < basket.length;
-      i++
-    ) {
-
-      const item =
-        basket[i];
-
-
-      const pool =
-        discoveredPools.find(
-          p =>
-            p.token.symbol ===
-            item.symbol
-        );
-
-
-      if (!pool) {
-
-        throw new Error(
-          `No pool found for ${item.symbol}.`
-        );
-      }
-
-
-      let allocation;
-
-
-/*
-  Allocate from the amount remaining
-  after the app fee.
-
-  Final leg receives the exact remainder
-  so no USDG is left behind from rounding.
-*/
-
-if (
-  i === basket.length - 1
-) {
-
-  allocation =
-    investRaw -
-    allocatedSoFar;
-
-} else {
-
-  const weightBps =
-    BigInt(
-      Math.round(
-        item.weight * 100
-      )
-    );
-
-  allocation =
-    investRaw *
-    weightBps /
-    10000n;
-}
-
-allocatedSoFar += allocation;
-
-if (allocation <= 0n) {
-  throw new Error(
-    `${item.symbol} allocation is too small. Increase the basket size or weight.`
-  );
-}
-
-
-      const key =
-        pool.key;
-
-
-      const zeroForOne =
-        key.currency0.toLowerCase()
-        ===
-        USDG.toLowerCase();
-
-
-      const quote =
-        await quoter
-          .quoteExactInputSingle
-          .staticCall({
-
-            poolKey: {
-
-              currency0:
-                key.currency0,
-
-              currency1:
-                key.currency1,
-
-              fee:
-                key.fee,
-
-              tickSpacing:
-                key.tickSpacing,
-
-              hooks:
-                key.hooks
-            },
-
-            zeroForOne,
-
-            exactAmount:
-              allocation,
-
-            hookData:
-              "0x"
-          });
-
-
-      const minAmountOut =
-
-        quote.amountOut *
-
-        (
-          BPS -
-          slippageBps
-        )
-
-        /
-
-        BPS;
-
-
-      let dynamicFee = null;
-
-
-      try {
-
-        const hook =
-          new Contract(
-            key.hooks,
-            HOOK_ABI,
-            provider
-          );
-
-        dynamicFee =
-          await hook.currentFee(
-            pool.id,
-            zeroForOne
-          );
-
-      } catch {}
-
-quoteCards.push({
-
-  symbol:
-    item.symbol,
-
-  allocation: 
-    formatUnits(
-      allocation,
-      6
-    ),
-
-  expected:
-    formatUnits(
-      quote.amountOut,
-      pool.token.decimals
-    ),
-
-  minimum:
-    formatUnits(
-      minAmountOut,
-      pool.token.decimals
-    ),
-
-  fee:
-    dynamicFee !== null
-      ? (
-          Number(dynamicFee) / 10000
-        ).toFixed(4) + "%"
-      : "Unknown"
-
-});
-
-
-      log("");
-      log(item.symbol);
-      log("----------------------------");
-
-      log(
-        "Allocation: " +
-        formatUnits(
-          allocation,
-          6
-        ) +
-        " USDG"
-      );
-
-
-      log(
-        "Expected: " +
-        formatUnits(
-          quote.amountOut,
-          pool.token.decimals
-        ) +
-        " " +
-        item.symbol
-      );
-
-
-      log(
-        "Minimum: " +
-        formatUnits(
-          minAmountOut,
-          pool.token.decimals
-        ) +
-        " " +
-        item.symbol
-      );
-
-
-      if (
-        dynamicFee !== null
-      ) {
-
-        log(
-          "Dynamic fee: " +
-          (
-            Number(dynamicFee)
-            /
-            10000
-          ).toFixed(4)
-          +
-          "%"
-        );
-      }
-
-
-      /* ===========================
-         BUILD V4 SWAP
-         =========================== */
-
-      const swapParam =
-        abi.encode(
-          [
-            `tuple(
-              tuple(
-                address currency0,
-                address currency1,
-                uint24 fee,
-                int24 tickSpacing,
-                address hooks
-              ) poolKey,
-              bool zeroForOne,
-              uint128 amountIn,
-              uint128 amountOutMinimum,
-              uint256 minHopPriceX36,
-              bytes hookData
-            )`
-          ],
-
-          [
-            {
-
-              poolKey: {
-
-                currency0:
-                  key.currency0,
-
-                currency1:
-                  key.currency1,
-
-                fee:
-                  key.fee,
-
-                tickSpacing:
-                  key.tickSpacing,
-
-                hooks:
-                  key.hooks
-              },
-
-              zeroForOne,
-
-              amountIn:
-                allocation,
-
-              amountOutMinimum:
-                minAmountOut,
-
-              minHopPriceX36:
-                0,
-
-              hookData:
-                "0x"
-            }
-          ]
-        );
-
-
-      const inputCurrency =
-        zeroForOne
-          ? key.currency0
-          : key.currency1;
-
-
-      const outputCurrency =
-        zeroForOne
-          ? key.currency1
-          : key.currency0;
-
-
-      const settleParam =
-        abi.encode(
-          [
-            "address",
-            "uint256"
-          ],
-
-          [
-            inputCurrency,
-            allocation
-          ]
-        );
-
-
-      const takeParam =
-        abi.encode(
-          [
-            "address",
-            "uint256"
-          ],
-
-          [
-            outputCurrency,
-            minAmountOut
-          ]
-        );
-
-
-      const actions =
-        hexlify(
-          Uint8Array.from([
-            SWAP_EXACT_IN_SINGLE,
-            SETTLE_ALL,
-            TAKE_ALL
-          ])
-        );
-
-
-      const v4Input =
-        abi.encode(
-          [
-            "bytes",
-            "bytes[]"
-          ],
-
-          [
-            actions,
-
-            [
-              swapParam,
-              settleParam,
-              takeParam
-            ]
-          ]
-        );
-
-
-      commands +=
-
-        V4_SWAP
-          .toString(16)
-          .padStart(2, "0");
-
-
-      inputs.push(
-        v4Input
-      );
+    const slippageBps = BigInt(slippageSelect.value);
+    const quoteCards = [];
+    const quotes = [];
+    const quoteBlock = await provider.getBlockNumber();
+    log("LIVE QUOTRONS V4 QUOTES");
+    for (const allocation of allocations) {
+      const pool = discoveredPools.find(p => p.token.symbol === allocation.symbol);
+      if (!pool) throw new Error(`No pool found for ${allocation.symbol}.`);
+      const q = await quoteInkBuy(provider, pool, allocation.amountIn, slippageBps, quoteBlock);
+      quotes.push(q);
+      quoteCards.push({
+        symbol: pool.token.wrappedSymbol,
+        allocation: formatUnits(q.amountIn, 6),
+        expected: formatUnits(q.amountOut, pool.token.decimals),
+        minimum: formatUnits(q.minAmountOut, pool.token.decimals),
+        fee: (Number(q.feeBps) / 100).toFixed(2) + "%"
+      });
+      log(`${pool.token.wrappedSymbol}: ${formatUnits(q.amountOut, pool.token.decimals)}`);
     }
-
-/* ===========================
-   APP FEE TRANSFER
-   =========================== */
-
-if (appFeeRaw > 0n) {
-
-  const feeInput =
-    abi.encode(
-      [
-        "address",
-        "address",
-        "uint160"
-      ],
-      [
-        USDG,
-        APP_FEE_RECIPIENT,
-        appFeeRaw
-      ]
-    );
-
-  commands +=
-    PERMIT2_TRANSFER_FROM
-      .toString(16)
-      .padStart(2, "0");
-
-  inputs.push(
-    feeInput
-  );
-}
-
-
-    /* ===========================
-       UNIVERSAL ROUTER TX
-       =========================== */
-
-    const deadline =
-      Math.floor(
-        Date.now() / 1000
-      )
-      +
-      900;
-
-
-    const routerInterface =
-      new Interface(
-        ROUTER_ABI
-      );
-
-
-    const calldata =
-      routerInterface
-        .encodeFunctionData(
-          "execute",
-          [
-            commands,
-            inputs,
-            deadline
-          ]
-        );
-
-
-    preparedTransaction = {
-
-      from:
-        walletAddress,
-
-      to:
-        UNIVERSAL_ROUTER,
-
-      data:
-        calldata,
-
-      value:
-        0n
-    };
-
+    const deadline = Math.floor(Date.now() / 1000) + 900;
+    const transaction = encodeInkBasket(quotes, {
+      account: buildAccount, feeRecipient: APP_FEE_RECIPIENT, feeRaw: appFeeRaw, deadline
+    });
 
     /* ===========================
        FINAL SIMULATION
@@ -4118,15 +3498,21 @@ if (appFeeRaw > 0n) {
 
 
     await provider.call(
-      preparedTransaction
+      transaction
     );
 
 
     const gasEstimate =
       await provider.estimateGas(
-        preparedTransaction
+        transaction
       );
 
+
+    if (buildRevision !== basketRevision || walletAddress !== buildAccount
+      || BigInt(await provider.send("eth_chainId", [])) !== CHAIN_ID) {
+      throw new Error("Wallet or basket changed. Build a fresh quote.");
+    }
+    preparedTransaction = transaction;
 
     log("");
 
@@ -4205,8 +3591,7 @@ quoteSummary.innerHTML = `
     );
 
     log(
-      "Commands: " +
-      commands
+      `Router commands: ${basket.length} atomic stock swaps plus the app fee.`
     );
 
     log(
@@ -4274,33 +3659,20 @@ async () => {
 
   try {
 
-    if (!preparedTransaction) {
-
-if (
-  !quoteExpiresAt
-  ||
-  Date.now() >= quoteExpiresAt
-) {
-
-  throw new Error(
-    "Quote expired. Build and simulate again."
-  );
-}
-
-      throw new Error(
-        "Build and simulate the basket first."
-      );
+    if (!preparedTransaction || !quoteExpiresAt || Date.now() >= quoteExpiresAt) {
+      invalidatePreparedTx();
+      throw new Error("Quote expired. Build and simulate again.");
     }
 
+    const transactionToSend = preparedTransaction;
+    const quoteExpiry = quoteExpiresAt;
 
     /*
       Re-simulate immediately
       before asking the wallet to sign.
     */
 
-    await provider.call(
-      preparedTransaction
-    );
+    await provider.call(transactionToSend);
 
 const basket =
   getBasketDefinition();
@@ -4324,6 +3696,10 @@ const balancesBefore =
     }
 
 
+    if (preparedTransaction !== transactionToSend || walletAddress.toLowerCase() !== transactionToSend.from.toLowerCase()
+      || Date.now() >= quoteExpiry || BigInt(await provider.send("eth_chainId", [])) !== CHAIN_ID) {
+      throw new Error("Wallet, basket, or quote changed. Build a fresh quote.");
+    }
     sendButton.disabled = true;
 
 txStatus.innerHTML = `
@@ -4343,10 +3719,10 @@ txStatus.innerHTML = `
       await signer.sendTransaction({
 
         to:
-          preparedTransaction.to,
+          transactionToSend.to,
 
         data:
-          preparedTransaction.data,
+          transactionToSend.data,
 
         value:
           0n
@@ -4357,7 +3733,7 @@ txStatus.innerHTML = `
     <div>Transaction submitted.</div>
 
     <a
-      href="https://explorer.mainnet.chain.robinhood.com/tx/${tx.hash}"
+      href="https://explorer.inkonchain.com/tx/${tx.hash}"
       target="_blank"
       rel="noopener noreferrer"
       class="tx-link"
@@ -4388,11 +3764,6 @@ sendButton.disabled = true;
       tx.hash
     );
 
-txStatus.innerHTML = `
-  <div class="tx-status-box tx-status-submitted">
-    Transaction submitted.
-  </div>
-`;
 
 
     log("");
@@ -4449,7 +3820,7 @@ const received =
       after.raw - before.raw;
 
     return {
-      symbol: item.symbol,
+      symbol: discoveredPools.find(p => p.token.symbol === item.symbol)?.token.wrappedSymbol || item.symbol,
       amount: formatUnits(
         delta,
         after.decimals
@@ -4484,7 +3855,7 @@ txStatus.innerHTML = `
     }
 
     <a
-      href="https://explorer.mainnet.chain.robinhood.com/tx/${tx.hash}"
+      href="https://explorer.inkonchain.com/tx/${tx.hash}"
       target="_blank"
       rel="noopener noreferrer"
       class="tx-link"
@@ -4570,7 +3941,7 @@ async () => {
       method: "wallet_switchEthereumChain",
       params: [
         {
-          chainId: "0x1237"
+          chainId: "0xdef1"
         }
       ]
     });
@@ -4609,7 +3980,7 @@ networkPillText.textContent =
 
         walletInfo.innerHTML = `
           <span class="status-bad">
-            Network changed. Switch back to Robinhood Chain.
+            Network changed. Switch back to Ink.
           </span>
         `;
 
@@ -4646,7 +4017,7 @@ switchNetworkButton.style.display =
 networkPill.classList.remove("wrong-network");
 
 networkPillText.textContent =
-  "Robinhood Chain";
+  "Ink";
 
 switchNetworkButton.style.display =
   "none";
